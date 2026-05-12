@@ -3,104 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ThePets: Soft & Infinite</title>
+    <title>ThePets: Premium Edition</title>
     <style>
-        :root { 
-            --primary: #a2d2ff; 
-            --bg: #f0f4f8; 
-            --panel: rgba(255, 255, 255, 0.8);
-            --text: #4a5568;
-            --accent: #ffafcc;
-        }
+        :root { --panel: #ffffff; --bg: #d6e4f0; --accent: #5a67d8; --gold: #d69e2e; --success: #48bb78; }
         body { 
-            margin: 0; 
-            background: #d6e4f0; /* Soft pastel mavi arka plan */
-            color: var(--text); 
+            margin: 0; background: var(--bg); color: #4a5568; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            overflow: hidden; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
+            overflow: hidden; display: flex; flex-direction: column; align-items: center; 
+            touch-action: none; user-select: none; -webkit-user-select: none;
         }
         
-        /* Üst Panel - Buzlu Cam Efekti */
+        /* Üst Bar */
         #ui { 
-            width: 90%; 
-            max-width: 400px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 15px; 
-            background: var(--panel); 
-            backdrop-filter: blur(10px);
-            border-radius: 20px; 
-            margin-top: 15px; 
-            border: 1px solid rgba(255,255,255,0.5);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+            width: 90%; max-width: 380px; display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; background: var(--panel); border-radius: 20px; 
+            margin-top: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 20;
         }
-        .score-box { font-size: 20px; font-weight: 700; color: #5a67d8; }
-        .next-box { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
-        #next-img { 
-            width: 45px; height: 45px; 
-            border-radius: 50%; 
-            border: 3px solid #fff; 
-            background: #fff; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        #score { font-size: 26px; font-weight: 900; color: var(--accent); }
+        #gold-display { color: var(--gold); font-weight: 800; font-size: 18px; }
+
+        /* Görev Butonu & Modal */
+        #mission-btn {
+            background: var(--success); color: white; border: none; padding: 10px 15px;
+            border-radius: 12px; font-weight: bold; cursor: pointer; transition: transform 0.2s;
+        }
+        #mission-btn:active { transform: scale(0.9); }
+        
+        #modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 90; backdrop-filter: blur(4px);
+        }
+        #mission-modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 280px; background: white; padding: 25px; border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 100; text-align: center;
         }
 
         /* Oyun Alanı */
         #game-container { 
-            position: relative; 
-            width: 380px; 
-            height: 580px; 
-            margin-top: 15px; 
-            border-radius: 30px; 
-            background: rgba(255, 255, 255, 0.4); 
-            backdrop-filter: blur(5px);
-            border: 2px solid rgba(255,255,255,0.6);
-            overflow: hidden; 
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+            position: relative; width: 380px; height: 420px; 
+            margin-top: 10px; border-radius: 25px; background: rgba(255,255,255,0.4);
+            overflow: hidden; border: 3px solid white; cursor: none;
         }
 
-        /* Alt Hiyerarşi */
+        /* Yetenek Butonları */
+        #shop { width: 90%; max-width: 380px; display: flex; gap: 10px; margin-top: 10px; }
+        .ability-btn {
+            flex: 1; padding: 10px; border-radius: 15px; border: none; background: white;
+            font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            transition: 0.3s;
+        }
+        .ability-btn.has-stock { background: #e6fffa; border: 1px solid var(--success); }
+        .btn-label { font-size: 10px; color: #718096; }
+        .btn-stock { font-size: 11px; color: var(--accent); }
+
+        /* Hiyerarşi Paneli */
         #hierarchy { 
-            width: 90%; 
-            max-width: 400px; 
-            background: var(--panel); 
-            margin-top: 15px; 
-            padding: 12px; 
-            border-radius: 20px; 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 8px; 
-            border: 1px solid rgba(255,255,255,0.5);
+            width: 95%; max-width: 400px; display: flex; gap: 8px; 
+            margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.3); 
+            border-radius: 15px; overflow-x: auto;
         }
-        .h-item { display: flex; flex-direction: column; align-items: center; font-size: 9px; }
-        .h-item img, .h-item .mystery { 
-            width: 30px; height: 30px; 
-            border-radius: 50%; 
-            border: 2px solid #fff; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .h-item .mystery { 
-            background: #cbd5e0; 
-            display: flex; align-items: center; 
-            justify-content: center; 
-            font-size: 16px; color: #fff; 
-        }
-        .h-item span { margin-top: 4px; font-weight: 600; color: #718096; }
+        .h-item { display: flex; flex-direction: column; align-items: center; min-width: 38px; }
+        .h-item img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <div class="score-box">✨ <span id="score">0</span></div>
-    <div class="next-box">SIRADAKİ <img id="next-img" src="" alt="?"></div>
+    <div class="stats">
+        <div id="score">0</div>
+        <div id="gold-display">💰 <span id="gold-count">0</span></div>
+    </div>
+    <button id="mission-btn" onclick="toggleMission(true)">📜 GÖREV</button>
+    <div class="next-wrap">
+        <img id="next-img" src="" width="45" height="45" style="border-radius:50%; border:2px solid white; background: white;">
+    </div>
+</div>
+
+<div id="modal-overlay" onclick="toggleMission(false)"></div>
+<div id="mission-modal">
+    <h3 style="margin-top:0">Aktif Görev</h3>
+    <p id="mission-text" style="font-weight:bold; color:var(--accent); font-size:18px"></p>
+    <h2 id="mission-progress" style="background:#f7fafc; padding:10px; border-radius:15px">0 / 0</h2>
+    <p style="font-size: 12px; color: #a0aec0;">Tamamla ve <b>50 Altın</b> kazan!</p>
+    <button onclick="toggleMission(false)" style="background:var(--accent); color:white; border:none; padding:12px 25px; border-radius:12px; cursor:pointer; width:100%">KAPAT</button>
 </div>
 
 <div id="game-container">
     <canvas id="game-canvas"></canvas>
+</div>
+
+<div id="shop">
+    <button id="btn-undo" class="ability-btn" onclick="handleAbility('undo')">
+        <span>↩️ GERİ AL</span>
+        <span id="u-label" class="btn-label">SATIN AL (50💰)</span>
+        <b id="u-st" class="btn-stock">Adet: 0</b>
+    </button>
+    <button id="btn-shake" class="ability-btn" onclick="handleAbility('shake')">
+        <span>📳 SALLA</span>
+        <span id="s-label" class="btn-label">SATIN AL (30💰)</span>
+        <b id="s-st" class="btn-stock">Adet: 0</b>
+    </button>
 </div>
 
 <div id="hierarchy"></div>
@@ -108,144 +112,179 @@
 <script>
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('score');
-    const nextImgEl = document.getElementById('next-img');
-    const hierarchyEl = document.getElementById('hierarchy');
-
-    canvas.width = 380;
-    canvas.height = 580;
+    canvas.width = 380; canvas.height = 420;
 
     const PET_LIST = ["pinky", "dinory", "sleapy", "stary", "browny", "sunny", "flip", "dot", "gus", "sugar", "blinky", "squeak", "yeyet"];
-    
-    // Soft Renk Paleti
-    const SOFT_COLORS = ["#ffadad", "#ffd6a5", "#fdffb6", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff", "#ffc6ff", "#ffcaaf", "#d4f1f4", "#e2ece9", "#f1e3d3", "#dec0f1"];
-
-    const PET_DATA = PET_LIST.map((name, i) => ({
-        name: name,
-        r: 18 + (i * 10),
-        imgSrc: name + ".jpg",
-        color: SOFT_COLORS[i]
+    const PET_DATA = PET_LIST.map((name, i) => ({ 
+        name, r: 15 + (i * 6.5), 
+        color: `hsl(${i * 28}, 70%, 85%)`, 
+        img: new Image() 
     }));
-
-    let items = [];
-    let score = 0;
-    let currentLevel = 0;
-    let nextLevel = Math.floor(Math.random() * 3);
-    let targetX = canvas.width / 2;
-    let smoothX = canvas.width / 2;
-    let isReady = true;
+    PET_DATA.forEach(d => d.img.src = d.name + ".jpg");
 
     // Hiyerarşi Paneli Oluşturma
-    PET_DATA.forEach((pet, i) => {
+    const hBox = document.getElementById('hierarchy');
+    PET_DATA.forEach(p => {
         const div = document.createElement('div');
         div.className = 'h-item';
-        if(pet.name === "yeyet") div.innerHTML = `<div class="mystery">?</div><span>???</span>`;
-        else div.innerHTML = `<img src="${pet.imgSrc}" onerror="this.style.backgroundColor='${pet.color}'"><span>${pet.name}</span>`;
-        hierarchyEl.appendChild(div);
+        div.innerHTML = `<img src="${p.name}.jpg">`;
+        hBox.appendChild(div);
     });
 
+    let gold = parseInt(localStorage.getItem('pets_gold')) || 100; // Başlangıç altını
+    let score = 0, items = [], history = [];
+    let stocks = { undo: 0, shake: 0 };
+    let mission = { type: 0, target: 5, current: 0 };
+    
+    let currLvl = 0, nextLvl = 1;
+    let isReady = true;
+    let mouseX = 190, smoothX = 190;
+
+    function toggleMission(show) {
+        document.getElementById('mission-modal').style.display = show ? 'block' : 'none';
+        document.getElementById('modal-overlay').style.display = show ? 'block' : 'none';
+    }
+
     function updateUI() {
-        nextImgEl.src = PET_DATA[nextLevel].imgSrc;
-        scoreEl.innerText = score;
+        document.getElementById('gold-count').innerText = gold;
+        document.getElementById('score').innerText = score;
+        document.getElementById('next-img').src = PET_DATA[nextLvl].name + ".jpg";
+        
+        // Stoklar ve Buton Etiketleri
+        document.getElementById('u-st').innerText = "Adet: " + stocks.undo;
+        document.getElementById('s-st').innerText = "Adet: " + stocks.shake;
+        
+        const uBtn = document.getElementById('btn-undo');
+        const sBtn = document.getElementById('btn-shake');
+
+        if(stocks.undo > 0) {
+            uBtn.classList.add('has-stock');
+            document.getElementById('u-label').innerText = "ÜCRETSİZ KULLAN";
+        } else {
+            uBtn.classList.remove('has-stock');
+            document.getElementById('u-label').innerText = "SATIN AL (50💰)";
+        }
+
+        if(stocks.shake > 0) {
+            sBtn.classList.add('has-stock');
+            document.getElementById('s-label').innerText = "ÜCRETSİZ KULLAN";
+        } else {
+            sBtn.classList.remove('has-stock');
+            document.getElementById('s-label').innerText = "SATIN AL (30💰)";
+        }
+
+        document.getElementById('mission-text').innerText = PET_LIST[mission.type].toUpperCase();
+        document.getElementById('mission-progress').innerText = `${mission.current} / ${mission.target}`;
+        localStorage.setItem('pets_gold', gold);
+    }
+
+    function handleAbility(type) {
+        if(stocks[type] > 0) {
+            // KULLAN
+            if(type === 'undo' && history.length > 0) {
+                items = JSON.parse(history.pop());
+                stocks.undo--;
+            } else if(type === 'shake') {
+                items.forEach(p => { p.vx += (Math.random()-0.5)*30; p.vy -= 15; });
+                stocks.shake--;
+            }
+        } else {
+            // SATIN AL
+            let cost = type === 'undo' ? 50 : 30;
+            if(gold >= cost) {
+                gold -= cost;
+                stocks[type]++;
+            }
+        }
+        updateUI();
     }
 
     class Pet {
         constructor(x, y, level, isStatic = false) {
             this.x = x; this.y = y; this.level = level;
-            this.r = PET_DATA[level].r;
-            this.vy = 0; this.vx = 0; this.isStatic = isStatic;
+            this.r = PET_DATA[level].r; this.vx = 0; this.vy = 0;
+            this.isStatic = isStatic;
         }
         draw() {
             ctx.save();
-            if(this.isStatic) ctx.globalAlpha = 0.5;
-            
-            // Gölge Efekti (Soft görünüm için)
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = "rgba(0,0,0,0.05)";
-            
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-            ctx.clip();
-            
-            const img = new Image(); img.src = PET_DATA[this.level].imgSrc;
+            ctx.globalAlpha = this.isStatic ? 0.6 : 1;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2); ctx.clip();
             ctx.fillStyle = PET_DATA[this.level].color; ctx.fill();
-            ctx.drawImage(img, this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
-            
+            ctx.drawImage(PET_DATA[this.level].img, this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
             ctx.restore();
-            // İnce beyaz kenarlık
-            ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.stroke();
+            ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
         }
         update() {
-            if (this.isStatic) return;
-            this.vy += 0.6; // Soft yerçekimi
-            this.x += this.vx; this.y += this.vy;
-            this.vx *= 0.98; this.vy *= 0.98;
-
-            if (this.y + this.r > canvas.height) {
-                this.y = canvas.height - this.r;
-                this.vy *= -0.1; 
-            }
-            if (this.x - this.r < 0) { this.x = this.r; this.vx *= -0.3; }
-            if (this.x + this.r > canvas.width) { this.x = canvas.width - this.r; this.vx *= -0.3; }
+            if(this.isStatic) return;
+            this.vy += 0.6; this.x += this.vx; this.y += this.vy;
+            if(this.y + this.r > 420) { this.y = 420 - this.r; this.vy *= -0.15; this.vx *= 0.95; }
+            if(this.x < this.r) { this.x = this.r; this.vx *= -0.3; }
+            if(this.x > 380 - this.r) { this.x = 380 - this.r; this.vx *= -0.3; }
         }
     }
 
     function checkPhysics() {
-        for (let i = 0; i < items.length; i++) {
-            for (let j = i + 1; j < items.length; j++) {
-                let p1 = items[i]; let p2 = items[j];
-                let dx = p2.x - p1.x; let dy = p2.y - p1.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-
-                if (dist < p1.r + p2.r) {
-                    if (p1.level === p2.level) {
-                        let nl = (p1.level === 12) ? 0 : p1.level + 1;
-                        items.splice(j, 1); items.splice(i, 1);
-                        items.push(new Pet((p1.x + p2.x)/2, (p1.y + p2.y)/2, nl));
-                        score += (nl + 1) * 10; updateUI(); return;
+        for(let step=0; step<4; step++) {
+            for(let i=0; i<items.length; i++) {
+                for(let j=i+1; j<items.length; j++) {
+                    let p1 = items[i], p2 = items[j];
+                    let dx = p2.x - p1.x, dy = p2.y - p1.y;
+                    let dist = Math.hypot(dx, dy);
+                    let minDist = p1.r + p2.r;
+                    if(dist < minDist) {
+                        if(p1.level === p2.level && step === 0) {
+                            if(p1.level === mission.type) mission.current++;
+                            if(mission.current >= mission.target) { gold += 50; mission.type = Math.floor(Math.random()*3); mission.current = 0; }
+                            let nl = (p1.level === 12) ? 0 : p1.level + 1;
+                            items.splice(j, 1); items.splice(i, 1);
+                            items.push(new Pet((p1.x+p2.x)/2, (p1.y+p2.y)/2, nl));
+                            gold += 2; score += 20; updateUI(); return;
+                        }
+                        let angle = Math.atan2(dy, dx), overlap = minDist - dist;
+                        p1.x -= Math.cos(angle) * overlap * 0.15; p1.y -= Math.sin(angle) * overlap * 0.15;
+                        p2.x += Math.cos(angle) * overlap * 0.15; p2.y += Math.sin(angle) * overlap * 0.15;
                     }
-                    let angle = Math.atan2(dy, dx);
-                    let overlap = (p1.r + p2.r) - dist;
-                    p1.x -= Math.cos(angle) * overlap * 0.15; p1.y -= Math.sin(angle) * overlap * 0.15;
-                    p2.x += Math.cos(angle) * overlap * 0.15; p2.y += Math.sin(angle) * overlap * 0.15;
                 }
             }
         }
     }
 
-    function loop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        smoothX += (targetX - smoothX) * 0.12;
-        
-        // Soft Kılavuz Çizgi
-        ctx.beginPath();
-        ctx.setLineDash([5, 15]);
-        ctx.moveTo(smoothX, 60); ctx.lineTo(smoothX, canvas.height);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        if(isReady) new Pet(smoothX, 50, currentLevel, true).draw();
-        checkPhysics();
-        items.forEach(it => { it.update(); it.draw(); });
-        requestAnimationFrame(loop);
-    }
-
-    const handleMove = (e) => {
+    function getPos(e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        targetX = clientX - rect.left;
-        if(targetX < 20) targetX = 20; if(targetX > canvas.width - 20) targetX = canvas.width - 20;
-    };
+        mouseX = clientX - rect.left;
+        if(mouseX < 20) mouseX = 20; if(mouseX > 360) mouseX = 360;
+    }
 
-    canvas.addEventListener('mousemove', handleMove);
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive: false});
+    canvas.addEventListener('mousemove', getPos);
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); getPos(e); }, { passive: false });
+
     canvas.addEventListener('click', () => {
         if(!isReady) return;
-        items.push(new Pet(smoothX, 50, currentLevel));
+        history.push(JSON.stringify(items)); if(history.length > 5) history.shift();
+        items.push(new Pet(smoothX, 40, currLvl));
         isReady = false;
-        setTimeout(() => { currentLevel = nextLevel; nextLevel = Math.floor(Math.random() * 3); updateUI(); isReady = true; }, 500);
+        setTimeout(() => { currLvl = nextLvl; nextLvl = Math.floor(Math.random()*3); isReady = true; updateUI(); }, 500);
     });
+
+    function loop() {
+        ctx.clearRect(0,0,380,420);
+        
+        // Ipeksi Yumuşaklık (Lerp)
+        smoothX += (mouseX - smoothX) * 0.12; 
+
+        // Kılavuz Çizgi
+        ctx.setLineDash([5, 15]);
+        ctx.beginPath(); ctx.moveTo(smoothX, 40); ctx.lineTo(smoothX, 420);
+        ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.stroke();
+        ctx.setLineDash([]);
+        
+        if(isReady) new Pet(smoothX, 40, currLvl, true).draw();
+
+        checkPhysics();
+        items.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(loop);
+    }
 
     updateUI(); loop();
 </script>
