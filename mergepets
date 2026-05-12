@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ThePets: Soft & Infinite</title>
+    <style>
+        :root { 
+            --primary: #a2d2ff; 
+            --bg: #f0f4f8; 
+            --panel: rgba(255, 255, 255, 0.8);
+            --text: #4a5568;
+            --accent: #ffafcc;
+        }
+        body { 
+            margin: 0; 
+            background: #d6e4f0; /* Soft pastel mavi arka plan */
+            color: var(--text); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        
+        /* Üst Panel - Buzlu Cam Efekti */
+        #ui { 
+            width: 90%; 
+            max-width: 400px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 15px; 
+            background: var(--panel); 
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
+            margin-top: 15px; 
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+        }
+        .score-box { font-size: 20px; font-weight: 700; color: #5a67d8; }
+        .next-box { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+        #next-img { 
+            width: 45px; height: 45px; 
+            border-radius: 50%; 
+            border: 3px solid #fff; 
+            background: #fff; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Oyun Alanı */
+        #game-container { 
+            position: relative; 
+            width: 380px; 
+            height: 580px; 
+            margin-top: 15px; 
+            border-radius: 30px; 
+            background: rgba(255, 255, 255, 0.4); 
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255,255,255,0.6);
+            overflow: hidden; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+        }
+
+        /* Alt Hiyerarşi */
+        #hierarchy { 
+            width: 90%; 
+            max-width: 400px; 
+            background: var(--panel); 
+            margin-top: 15px; 
+            padding: 12px; 
+            border-radius: 20px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 8px; 
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .h-item { display: flex; flex-direction: column; align-items: center; font-size: 9px; }
+        .h-item img, .h-item .mystery { 
+            width: 30px; height: 30px; 
+            border-radius: 50%; 
+            border: 2px solid #fff; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .h-item .mystery { 
+            background: #cbd5e0; 
+            display: flex; align-items: center; 
+            justify-content: center; 
+            font-size: 16px; color: #fff; 
+        }
+        .h-item span { margin-top: 4px; font-weight: 600; color: #718096; }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <div class="score-box">✨ <span id="score">0</span></div>
+    <div class="next-box">SIRADAKİ <img id="next-img" src="" alt="?"></div>
+</div>
+
+<div id="game-container">
+    <canvas id="game-canvas"></canvas>
+</div>
+
+<div id="hierarchy"></div>
+
+<script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const nextImgEl = document.getElementById('next-img');
+    const hierarchyEl = document.getElementById('hierarchy');
+
+    canvas.width = 380;
+    canvas.height = 580;
+
+    const PET_LIST = ["pinky", "dinory", "sleapy", "stary", "browny", "sunny", "flip", "dot", "gus", "sugar", "blinky", "squeak", "yeyet"];
+    
+    // Soft Renk Paleti
+    const SOFT_COLORS = ["#ffadad", "#ffd6a5", "#fdffb6", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff", "#ffc6ff", "#ffcaaf", "#d4f1f4", "#e2ece9", "#f1e3d3", "#dec0f1"];
+
+    const PET_DATA = PET_LIST.map((name, i) => ({
+        name: name,
+        r: 18 + (i * 10),
+        imgSrc: name + ".jpg",
+        color: SOFT_COLORS[i]
+    }));
+
+    let items = [];
+    let score = 0;
+    let currentLevel = 0;
+    let nextLevel = Math.floor(Math.random() * 3);
+    let targetX = canvas.width / 2;
+    let smoothX = canvas.width / 2;
+    let isReady = true;
+
+    // Hiyerarşi Paneli Oluşturma
+    PET_DATA.forEach((pet, i) => {
+        const div = document.createElement('div');
+        div.className = 'h-item';
+        if(pet.name === "yeyet") div.innerHTML = `<div class="mystery">?</div><span>???</span>`;
+        else div.innerHTML = `<img src="${pet.imgSrc}" onerror="this.style.backgroundColor='${pet.color}'"><span>${pet.name}</span>`;
+        hierarchyEl.appendChild(div);
+    });
+
+    function updateUI() {
+        nextImgEl.src = PET_DATA[nextLevel].imgSrc;
+        scoreEl.innerText = score;
+    }
+
+    class Pet {
+        constructor(x, y, level, isStatic = false) {
+            this.x = x; this.y = y; this.level = level;
+            this.r = PET_DATA[level].r;
+            this.vy = 0; this.vx = 0; this.isStatic = isStatic;
+        }
+        draw() {
+            ctx.save();
+            if(this.isStatic) ctx.globalAlpha = 0.5;
+            
+            // Gölge Efekti (Soft görünüm için)
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "rgba(0,0,0,0.05)";
+            
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.clip();
+            
+            const img = new Image(); img.src = PET_DATA[this.level].imgSrc;
+            ctx.fillStyle = PET_DATA[this.level].color; ctx.fill();
+            ctx.drawImage(img, this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
+            
+            ctx.restore();
+            // İnce beyaz kenarlık
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.stroke();
+        }
+        update() {
+            if (this.isStatic) return;
+            this.vy += 0.6; // Soft yerçekimi
+            this.x += this.vx; this.y += this.vy;
+            this.vx *= 0.98; this.vy *= 0.98;
+
+            if (this.y + this.r > canvas.height) {
+                this.y = canvas.height - this.r;
+                this.vy *= -0.1; 
+            }
+            if (this.x - this.r < 0) { this.x = this.r; this.vx *= -0.3; }
+            if (this.x + this.r > canvas.width) { this.x = canvas.width - this.r; this.vx *= -0.3; }
+        }
+    }
+
+    function checkPhysics() {
+        for (let i = 0; i < items.length; i++) {
+            for (let j = i + 1; j < items.length; j++) {
+                let p1 = items[i]; let p2 = items[j];
+                let dx = p2.x - p1.x; let dy = p2.y - p1.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < p1.r + p2.r) {
+                    if (p1.level === p2.level) {
+                        let nl = (p1.level === 12) ? 0 : p1.level + 1;
+                        items.splice(j, 1); items.splice(i, 1);
+                        items.push(new Pet((p1.x + p2.x)/2, (p1.y + p2.y)/2, nl));
+                        score += (nl + 1) * 10; updateUI(); return;
+                    }
+                    let angle = Math.atan2(dy, dx);
+                    let overlap = (p1.r + p2.r) - dist;
+                    p1.x -= Math.cos(angle) * overlap * 0.15; p1.y -= Math.sin(angle) * overlap * 0.15;
+                    p2.x += Math.cos(angle) * overlap * 0.15; p2.y += Math.sin(angle) * overlap * 0.15;
+                }
+            }
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        smoothX += (targetX - smoothX) * 0.12;
+        
+        // Soft Kılavuz Çizgi
+        ctx.beginPath();
+        ctx.setLineDash([5, 15]);
+        ctx.moveTo(smoothX, 60); ctx.lineTo(smoothX, canvas.height);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if(isReady) new Pet(smoothX, 50, currentLevel, true).draw();
+        checkPhysics();
+        items.forEach(it => { it.update(); it.draw(); });
+        requestAnimationFrame(loop);
+    }
+
+    const handleMove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        targetX = clientX - rect.left;
+        if(targetX < 20) targetX = 20; if(targetX > canvas.width - 20) targetX = canvas.width - 20;
+    };
+
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive: false});
+    canvas.addEventListener('click', () => {
+        if(!isReady) return;
+        items.push(new Pet(smoothX, 50, currentLevel));
+        isReady = false;
+        setTimeout(() => { currentLevel = nextLevel; nextLevel = Math.floor(Math.random() * 3); updateUI(); isReady = true; }, 500);
+    });
+
+    updateUI(); loop();
+</script>
+</body>
+</html>
