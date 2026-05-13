@@ -3,56 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ThePets: Clean Edition</title>
+    <title>ThePets: Precision Edition</title>
     <style>
         :root { --panel: #ffffff; --bg: #d6e4f0; --accent: #5a67d8; --success: #48bb78; }
         body { 
             margin: 0; background: var(--bg); color: #4a5568; 
-            font-family: sans-serif; 
-            overflow: hidden; display: flex; flex-direction: column; align-items: center; 
+            font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; 
             touch-action: none; user-select: none;
         }
 
         #ui { 
             width: 95%; max-width: 380px; display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; background: var(--panel); border-radius: 20px; 
-            margin-top: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 20;
+            padding: 12px; background: var(--panel); border-radius: 20px; 
+            margin-top: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 20;
         }
-        #score { font-size: 32px; font-weight: 900; color: var(--accent); }
+        #score { font-size: 28px; font-weight: 900; color: var(--accent); }
 
         #game-container { 
             position: relative; width: 360px; height: 460px; 
-            margin-top: 15px; border-radius: 25px; background: rgba(255,255,255,0.4);
+            margin-top: 10px; border-radius: 25px; background: rgba(255,255,255,0.4);
             overflow: hidden; border: 4px solid white;
         }
 
-        #shop { width: 95%; max-width: 380px; display: flex; gap: 12px; margin-top: 15px; }
+        #shop { width: 95%; max-width: 380px; display: flex; gap: 10px; margin-top: 10px; }
         .ability-btn {
             flex: 1; padding: 12px; border-radius: 15px; border: none; background: white;
-            font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            display: flex; flex-direction: column; align-items: center; gap: 2px;
-            transition: 0.2s; color: var(--accent);
+            font-weight: bold; cursor: pointer; color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-        .btn-label { font-size: 9px; color: var(--success); font-weight: 800; }
 
         #hierarchy { 
-            width: 95%; max-width: 400px; display: flex; gap: 8px; 
-            margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.2); 
+            width: 95%; max-width: 400px; display: flex; gap: 5px; 
+            margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.2); 
             border-radius: 15px; overflow-x: auto;
         }
-        .h-item img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; }
+        .h-item img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <div class="stats">
-        <div style="font-size: 10px; font-weight: bold; color: #a0aec0;">PUAN</div>
-        <div id="score">0</div>
-    </div>
+    <div><small>PUAN</small><div id="score">0</div></div>
     <div style="text-align: center;">
-        <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">SIRADAKİ</div>
-        <img id="next-img" src="" width="45" height="45" style="border-radius:50%; border:2px solid white; background: white;">
+        <small>SIRADAKİ</small><br>
+        <img id="next-img" src="" width="40" height="40" style="border-radius:50%; border:2px solid white; background: white;">
     </div>
 </div>
 
@@ -61,14 +54,8 @@
 </div>
 
 <div id="shop">
-    <button class="ability-btn" onclick="applyPower('undo')">
-        <span>↩️ GERİ AL</span>
-        <span class="btn-label">BEDAVA</span>
-    </button>
-    <button class="ability-btn" onclick="applyPower('shake')">
-        <span>📳 SALLA</span>
-        <span class="btn-label">BEDAVA</span>
-    </button>
+    <button class="ability-btn" onclick="usePower('undo')">↩️ GERİ AL</button>
+    <button class="ability-btn" onclick="usePower('shake')">📳 SALLA</button>
 </div>
 
 <div id="hierarchy"></div>
@@ -84,7 +71,7 @@
     const PET_DATA = PET_LIST.map((name, i) => {
         const img = new Image();
         img.src = RAW_URL + name + ".jpg";
-        return { name, r: 15 + (i * 7), img };
+        return { name, r: 15 + (i * 7.5), img };
     });
 
     const hBox = document.getElementById('hierarchy');
@@ -94,22 +81,57 @@
         hBox.appendChild(div);
     });
 
-    let score = 0, items = [], steps = [], isReady = true, mouseX = 180, smoothX = 180;
+    let score = 0, items = [], snapshots = [], isReady = true, currentX = 180;
     let currLvl = 0, nextLvl = 1;
 
-    function updateUI() {
-        document.getElementById('score').innerText = score;
-        document.getElementById('next-img').src = RAW_URL + PET_DATA[nextLvl].name + ".jpg";
+    // HASSAS TAKİP SİSTEMİ
+    function handleMove(e) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let targetX = clientX - rect.left;
+        
+        // Kenar sınırlarını petin yarıçapına göre ayarla
+        let limit = PET_DATA[currLvl].r;
+        if (targetX < limit) targetX = limit;
+        if (targetX > canvas.width - limit) targetX = canvas.width - limit;
+        
+        currentX = targetX; // Artık smooth (yumuşatma) yok, direkt hedef
     }
 
-    function applyPower(type) {
-        if (type === 'undo' && steps.length > 0) {
-            items = JSON.parse(steps.pop()).map(p => {
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive: false});
+    
+    // TIKLAMA VE BIRAKMA
+    canvas.addEventListener('mouseup', drop);
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); drop(); }, {passive: false});
+
+    function drop() {
+        if(!isReady) return;
+        
+        // Geri al için kaydet
+        snapshots.push(JSON.stringify(items.map(p => ({x:p.x, y:p.y, level:p.level, vx:p.vx, vy:p.vy}))));
+        if(snapshots.length > 15) snapshots.shift();
+
+        // Tam olarak parmağın olduğu yerden bırak
+        items.push(new Pet(currentX, 45, currLvl));
+        
+        isReady = false;
+        setTimeout(() => { 
+            currLvl = nextLvl; 
+            nextLvl = Math.floor(Math.random() * 3); 
+            isReady = true; 
+            updateUI(); 
+        }, 500);
+    }
+
+    function usePower(type) {
+        if (type === 'undo' && snapshots.length > 0) {
+            items = JSON.parse(snapshots.pop()).map(p => {
                 let np = new Pet(p.x, p.y, p.level);
                 np.vx = p.vx; np.vy = p.vy; return np;
             });
         } else if (type === 'shake') {
-            items.forEach(p => { p.vx += (Math.random()-0.5)*30; p.vy -= 15; });
+            items.forEach(p => { p.vx += (Math.random()-0.5) * 45; p.vy -= 20; });
         }
         updateUI();
     }
@@ -121,20 +143,18 @@
         }
         draw() {
             ctx.save();
-            ctx.globalAlpha = this.isStatic ? 0.5 : 1;
+            ctx.globalAlpha = this.isStatic ? 0.6 : 1;
             ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2); ctx.clip();
-            try {
-                ctx.drawImage(PET_DATA[this.level].img, this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
-            } catch(e) {}
+            try { ctx.drawImage(PET_DATA[this.level].img, this.x - this.r, this.y - this.r, this.r * 2, this.r * 2); } catch(e){}
             ctx.restore();
-            ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
         }
         update() {
             if(this.isStatic) return;
-            this.vy += 0.8; this.x += this.vx; this.y += this.vy;
+            this.vy += 0.9; this.x += this.vx; this.y += this.vy;
             if (this.x < this.r) { this.x = this.r; this.vx *= -0.4; }
-            if (this.x > 360 - this.r) { this.x = 360 - this.r; this.vx *= -0.4; }
-            if (this.y > 460 - this.r) { this.y = 460 - this.r; this.vy *= -0.2; this.vx *= 0.8; }
+            if (this.x > canvas.width - this.r) { this.x = canvas.width - this.r; this.vx *= -0.4; }
+            if (this.y > canvas.height - this.r) { this.y = canvas.height - this.r; this.vy *= -0.2; this.vx *= 0.8; }
         }
     }
 
@@ -146,46 +166,38 @@
                 if(dist < p1.r + p2.r) {
                     if(p1.level === p2.level) {
                         let nl = (p1.level >= PET_LIST.length - 1) ? p1.level : p1.level + 1;
-                        if(p1.level < PET_LIST.length - 1) {
-                            items.splice(j, 1); items.splice(i, 1);
-                            items.push(new Pet((p1.x+p2.x)/2, (p1.y+p2.y)/2, nl));
-                            score += (nl + 1) * 5;
-                        }
+                        items.splice(j, 1); items.splice(i, 1);
+                        items.push(new Pet((p1.x+p2.x)/2, (p1.y+p2.y)/2, nl));
+                        score += (nl + 1) * 10;
                         updateUI(); return;
                     }
-                    let angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                    let ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
                     let overlap = (p1.r + p2.r) - dist;
-                    p1.x -= Math.cos(angle) * overlap * 0.3; p1.y -= Math.sin(angle) * overlap * 0.3;
-                    p2.x += Math.cos(angle) * overlap * 0.3; p2.y += Math.sin(angle) * overlap * 0.3;
+                    p1.x -= Math.cos(ang) * overlap * 0.45; p1.y -= Math.sin(ang) * overlap * 0.45;
+                    p2.x += Math.cos(ang) * overlap * 0.45; p2.y += Math.sin(ang) * overlap * 0.45;
                 }
             }
         }
     }
 
-    canvas.addEventListener('mousedown', drop);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); drop(); });
-
-    function drop() {
-        if(!isReady) return;
-        steps.push(JSON.stringify(items.map(p => ({x:p.x, y:p.y, level:p.level, vx:p.vx, vy:p.vy}))));
-        if(steps.length > 5) steps.shift();
-        items.push(new Pet(smoothX, 40, currLvl));
-        isReady = false;
-        setTimeout(() => { currLvl = nextLvl; nextLvl = Math.floor(Math.random()*3); isReady = true; updateUI(); }, 600);
+    function updateUI() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('next-img').src = RAW_URL + PET_DATA[nextLvl].name + ".jpg";
     }
 
     function loop() {
-        ctx.clearRect(0,0,360,460);
-        const r = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        canvas.onmousemove = (e) => { mouseX = e.clientX - r.left; };
-        canvas.ontouchmove = (e) => { mouseX = e.touches[0].clientX - r.left; };
+        // Yukarıda bekleyen pet (atışa hazır)
+        if(isReady) {
+            new Pet(currentX, 45, currLvl, true).draw();
+            // Çizgi ekledim (Hedef alma çizgisi)
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(currentX, 45); ctx.lineTo(currentX, 460);
+            ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.stroke();
+            ctx.setLineDash([]);
+        }
 
-        let limit = PET_DATA[currLvl].r;
-        if (mouseX < limit) mouseX = limit; if (mouseX > 360 - limit) mouseX = 360 - limit;
-        smoothX += (mouseX - smoothX) * 0.15;
-
-        if(isReady) new Pet(smoothX, 40, currLvl, true).draw();
         checkPhysics();
         items.forEach(p => { p.update(); p.draw(); });
         requestAnimationFrame(loop);
