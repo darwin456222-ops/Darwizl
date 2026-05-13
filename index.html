@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>ThePets: Premium Edition</title>
     <style>
-        :root { --panel: #ffffff; --bg: #d6e4f0; --accent: #5a67d8; --gold: #d69e2e; --success: #48bb78; }
+        :root { --panel: #ffffff; --bg: #d6e4f0; --accent: #5a67d8; --success: #48bb78; }
         body { 
             margin: 0; background: var(--bg); color: #4a5568; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -13,27 +13,33 @@
             touch-action: none; user-select: none;
         }
         
+        /* Üst Bilgi Barı */
         #ui { 
             width: 95%; max-width: 380px; display: flex; justify-content: space-between; align-items: center;
             padding: 15px; background: var(--panel); border-radius: 20px; 
             margin-top: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 20;
         }
-        #score { font-size: 28px; font-weight: 900; color: var(--accent); }
-        #gold-display { color: var(--gold); font-weight: 800; font-size: 18px; }
+        #score { font-size: 32px; font-weight: 900; color: var(--accent); }
 
+        /* Oyun Sahası */
         #game-container { 
-            position: relative; width: 380px; height: 460px; 
+            position: relative; width: 380px; height: 480px; 
             margin-top: 15px; border-radius: 25px; background: rgba(255,255,255,0.4);
             overflow: hidden; border: 4px solid white; cursor: none;
         }
 
+        /* Yetenek Butonları (ÜCRETSİZ) */
         #shop { width: 95%; max-width: 380px; display: flex; gap: 12px; margin-top: 15px; }
         .ability-btn {
-            flex: 1; padding: 12px; border-radius: 18px; border: none; background: white;
+            flex: 1; padding: 15px; border-radius: 18px; border: none; background: white;
             font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             display: flex; flex-direction: column; align-items: center; gap: 4px;
+            transition: 0.2s; color: var(--accent);
         }
+        .ability-btn:active { transform: scale(0.92); background: #f0f4ff; }
+        .btn-label { font-size: 10px; color: var(--success); font-weight: 800; }
 
+        /* Hiyerarşi Paneli */
         #hierarchy { 
             width: 95%; max-width: 400px; display: flex; gap: 8px; 
             margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.3); 
@@ -46,12 +52,12 @@
 
 <div id="ui">
     <div class="stats">
+        <div style="font-size: 10px; font-weight: bold; color: #a0aec0;">PUAN</div>
         <div id="score">0</div>
-        <div id="gold-display">💰 <span id="gold-count">100</span></div>
     </div>
     <div class="next-preview" style="text-align: center;">
         <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">SIRADAKİ</div>
-        <img id="next-img" src="" width="45" height="45" style="border-radius:50%; border:2px solid white; background: white;">
+        <img id="next-img" src="" width="50" height="50" style="border-radius:50%; border:2px solid white; background: white;">
     </div>
 </div>
 
@@ -60,8 +66,14 @@
 </div>
 
 <div id="shop">
-    <button class="ability-btn" onclick="handleAbility('undo')">↩️ GERİ AL<br><small style="font-size:9px">20 ALTIN</small></button>
-    <button class="ability-btn" onclick="handleAbility('shake')">📳 SALLA<br><small style="font-size:9px">30 ALTIN</small></button>
+    <button class="ability-btn" onclick="handleAbility('undo')">
+        <span>↩️ GERİ AL</span>
+        <span class="btn-label">ÜCRETSİZ</span>
+    </button>
+    <button class="ability-btn" onclick="handleAbility('shake')">
+        <span>📳 SALLA</span>
+        <span class="btn-label">ÜCRETSİZ</span>
+    </button>
 </div>
 
 <div id="hierarchy"></div>
@@ -69,19 +81,17 @@
 <script>
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = 380; canvas.height = 460;
+    canvas.width = 380; canvas.height = 480;
 
-    // YEYET ÇIKARILDI - Squeak son karakter yapıldı
     const PET_LIST = ["pinky", "dinory", "sleapy", "stary", "browny", "sunny", "flip", "dot", "gus", "sugar", "blinky", "squeak"];
     const RAW_URL = "https://raw.githubusercontent.com/darwin456222-ops/Darwiizl/main/";
 
     const PET_DATA = PET_LIST.map((name, i) => {
         const img = new Image();
         img.src = RAW_URL + name + ".jpg";
-        return { name, r: 16 + (i * 7), img };
+        return { name, r: 16 + (i * 7.2), img };
     });
 
-    // Hiyerarşi Paneli
     const hBox = document.getElementById('hierarchy');
     PET_DATA.forEach(p => {
         const div = document.createElement('div');
@@ -90,25 +100,24 @@
         hBox.appendChild(div);
     });
 
-    let gold = 100, score = 0, items = [], history = [], isReady = true, mouseX = 190, smoothX = 190;
+    let score = 0, items = [], history = [], isReady = true, mouseX = 190, smoothX = 190;
     let currLvl = 0, nextLvl = 1;
 
     function updateUI() {
-        document.getElementById('gold-count').innerText = gold;
         document.getElementById('score').innerText = score;
         document.getElementById('next-img').src = RAW_URL + PET_DATA[nextLvl].name + ".jpg";
     }
 
     function handleAbility(type) {
-        if (type === 'undo' && gold >= 20 && history.length > 0) {
-            gold -= 20;
+        if (type === 'undo' && history.length > 0) {
+            // Hamleyi hiçbir bedel olmadan geri yükle
             items = JSON.parse(history.pop()).map(p => {
                 let np = new Pet(p.x, p.y, p.level);
                 np.vx = p.vx; np.vy = p.vy; return np;
             });
-        } else if (type === 'shake' && gold >= 30) {
-            gold -= 30;
-            items.forEach(p => { p.vx += (Math.random()-0.5)*30; p.vy -= 15; });
+        } else if (type === 'shake') {
+            // Sınırsız sallama gücü
+            items.forEach(p => { p.vx += (Math.random()-0.5)*35; p.vy -= 18; });
         }
         updateUI();
     }
@@ -128,12 +137,10 @@
         }
         update() {
             if(this.isStatic) return;
-            this.vy += 0.8; this.x += this.vx; this.y += this.vy;
-            
-            // HARİTA SINIR KONTROLÜ
+            this.vy += 0.85; this.x += this.vx; this.y += this.vy;
             if (this.x < this.r) { this.x = this.r; this.vx *= -0.5; }
             if (this.x > 380 - this.r) { this.x = 380 - this.r; this.vx *= -0.5; }
-            if (this.y > 460 - this.r) { this.y = 460 - this.r; this.vy *= -0.3; this.vx *= 0.9; }
+            if (this.y > 480 - this.r) { this.y = 480 - this.r; this.vy *= -0.3; this.vx *= 0.9; }
         }
     }
 
@@ -144,19 +151,18 @@
                 let dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
                 if(dist < p1.r + p2.r) {
                     if(p1.level === p2.level) {
-                        // Son seviye (Squeak) ise daha fazla yükselmez, puan verir
                         let nl = (p1.level >= PET_LIST.length - 1) ? p1.level : p1.level + 1;
                         if(p1.level < PET_LIST.length - 1) {
                             items.splice(j, 1); items.splice(i, 1);
                             items.push(new Pet((p1.x+p2.x)/2, (p1.y+p2.y)/2, nl));
-                            gold += 5; score += 20; 
+                            score += (nl + 1) * 10;
                         }
                         updateUI(); return;
                     }
                     let angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
                     let overlap = (p1.r + p2.r) - dist;
-                    p1.x -= Math.cos(angle) * overlap * 0.3; p1.y -= Math.sin(angle) * overlap * 0.3;
-                    p2.x += Math.cos(angle) * overlap * 0.3; p2.y += Math.sin(angle) * overlap * 0.3;
+                    p1.x -= Math.cos(angle) * overlap * 0.35; p1.y -= Math.sin(angle) * overlap * 0.35;
+                    p2.x += Math.cos(angle) * overlap * 0.35; p2.y += Math.sin(angle) * overlap * 0.35;
                 }
             }
         }
@@ -165,24 +171,23 @@
     canvas.addEventListener('click', () => {
         if(!isReady) return;
         history.push(JSON.stringify(items.map(p => ({x:p.x, y:p.y, level:p.level, vx:p.vx, vy:p.vy}))));
-        if(history.length > 5) history.shift();
-        items.push(new Pet(smoothX, 40, currLvl));
+        if(history.length > 10) history.shift();
+        items.push(new Pet(smoothX, 45, currLvl));
         isReady = false;
         setTimeout(() => { currLvl = nextLvl; nextLvl = Math.floor(Math.random()*3); isReady = true; updateUI(); }, 500);
     });
 
     function loop() {
-        ctx.clearRect(0,0,380,460);
+        ctx.clearRect(0,0,380,480);
         const r = canvas.getBoundingClientRect();
-        
         canvas.onmousemove = (e) => { mouseX = e.clientX - r.left; };
         canvas.ontouchmove = (e) => { mouseX = e.touches[0].clientX - r.left; };
         
         let limit = PET_DATA[currLvl].r;
         if (mouseX < limit) mouseX = limit; if (mouseX > 380 - limit) mouseX = 380 - limit;
-        smoothX += (mouseX - smoothX) * 0.15;
+        smoothX += (mouseX - smoothX) * 0.18;
 
-        if(isReady) new Pet(smoothX, 40, currLvl, true).draw();
+        if(isReady) new Pet(smoothX, 45, currLvl, true).draw();
         checkPhysics();
         items.forEach(p => { p.update(); p.draw(); });
         requestAnimationFrame(loop);
