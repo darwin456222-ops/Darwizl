@@ -1,208 +1,227 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ThePets: Precision Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Pets: Yapay Zeka Evreni</title>
     <style>
-        :root { --panel: #ffffff; --bg: #d6e4f0; --accent: #5a67d8; --success: #48bb78; }
-        body { 
-            margin: 0; background: var(--bg); color: #4a5568; 
-            font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; 
-            touch-action: none; user-select: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: #89CFF0; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        
+        .chat-container { width: 100%; max-width: 480px; height: 95vh; background-color: #1e1e1e; border-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.6); border: 3px solid #555; position: relative; }
+        
+        /* KARAKTER DEĞİŞTİRME EKRANI */
+        .menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #89CFF0; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; z-index: 10; align-items: center; justify-content: center; }
+        .menu-screen.hidden { display: none; }
+        
+        .menu-box { background-color: #5cbbf6; border-radius: 25px; padding: 25px 15px; width: 100%; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); border: 2px solid #4ba3e3; }
+        .menu-title { color: #004ba0; text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 20px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; justify-items: center; }
+        
+        /* Beyaz arka plan ve iç boşluk kaldırıldı, doğrudan görsel görünecek */
+        .char-card { width: 100%; max-width: 160px; cursor: pointer; transition: transform 0.2s; border: none; background: none; padding: 0; box-shadow: none; }
+        .char-card:hover { transform: scale(1.05); }
+        .char-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 15px; display: block; }
+        
+        /* SOHBET ÜST ALANI */
+        .chat-header { background-color: #2e2e2e; padding: 10px 15px; display: flex; align-items: center; border-bottom: 2px solid #444; gap: 15px; }
+        .back-btn { background-color: #444; border: none; color: white; padding: 8px 14px; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .back-btn:hover { background-color: #666; }
+        
+        .header-info { display: flex; align-items: center; gap: 12px; flex: 1; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 50px; }
+        .header-avatar { width: 45px; height: 45px; border-radius: 50px; object-fit: cover; border: 2px solid #fff; }
+        .header-name { font-size: 18px; font-weight: bold; }
 
-        #ui { 
-            width: 95%; max-width: 380px; display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; background: var(--panel); border-radius: 20px; 
-            margin-top: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 20;
-        }
-        #score { font-size: 28px; font-weight: 900; color: var(--accent); }
+        /* Mesaj Alanı */
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #151515; }
+        .message { max-width: 75%; padding: 12px 16px; border-radius: 15px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
+        .message.bot { background-color: #2a2a2a; color: #ffffff; align-self: flex-start; border-bottom-left-radius: 2px; }
+        
+        /* Dinamik Renk Temaları */
+        .dot-theme { border-color: #2196F3; } .dot-theme .message.user { background-color: #2196F3; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .dot-theme .header-info { border: 2px solid #2196F3; }
+        .squeak-theme { border-color: #FF9800; } .squeak-theme .message.user { background-color: #FF9800; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .squeak-theme .header-info { border: 2px solid #FF9800; }
+        .sugar-theme { border-color: #E91E63; } .sugar-theme .message.user { background-color: #E91E63; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .sugar-theme .header-info { border: 2px solid #E91E63; }
+        .yeyet-theme { border-color: #E0E0E0; } .yeyet-theme .message.user { background-color: #E0E0E0; color: black; align-self: flex-end; border-bottom-right-radius: 2px; } .yeyet-theme .header-info { border: 2px solid #E0E0E0; }
+        .gus-theme { border-color: #9C27B0; } .gus-theme .message.user { background-color: #9C27B0; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .gus-theme .header-info { border: 2px solid #9C27B0; }
+        .moose-theme { border-color: #795548; } .moose-theme .message.user { background-color: #795548; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .moose-theme .header-info { border: 2px solid #795548; }
+        
+        .flip-theme { border-color: #8BC34A; } .flip-theme .message.user { background-color: #8BC34A; color: black; align-self: flex-end; border-bottom-right-radius: 2px; } .flip-theme .header-info { border: 2px solid #8BC34A; }
+        .blinky-theme { border-color: #00BCD4; } .blinky-theme .message.user { background-color: #00BCD4; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .blinky-theme .header-info { border: 2px solid #00BCD4; }
 
-        #game-container { 
-            position: relative; width: 360px; height: 460px; 
-            margin-top: 10px; border-radius: 25px; background: rgba(255,255,255,0.4);
-            overflow: hidden; border: 4px solid white;
-        }
-
-        #shop { width: 95%; max-width: 380px; display: flex; gap: 10px; margin-top: 10px; }
-        .ability-btn {
-            flex: 1; padding: 12px; border-radius: 15px; border: none; background: white;
-            font-weight: bold; cursor: pointer; color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-
-        #hierarchy { 
-            width: 95%; max-width: 400px; display: flex; gap: 5px; 
-            margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.2); 
-            border-radius: 15px; overflow-x: auto;
-        }
-        .h-item img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; }
+        /* Giriş Alanı */
+        .chat-input-area { padding: 15px; background-color: #2e2e2e; display: flex; gap: 10px; border-top: 1px solid #333; }
+        .chat-input { flex: 1; padding: 12px; border: none; border-radius: 25px; background-color: #121212; color: white; font-size: 14px; outline: none; }
+        .send-btn { border: none; padding: 0 20px; border-radius: 25px; cursor: pointer; font-weight: bold; color: white; }
+        
+        .dot-theme .send-btn { background-color: #2196F3; } .squeak-theme .send-btn { background-color: #FF9800; }
+        .sugar-theme .send-btn { background-color: #E91E63; } .yeyet-theme .send-btn { background-color: #E0E0E0; color: black; }
+        .gus-theme .send-btn { background-color: #9C27B0; } .moose-theme .send-btn { background-color: #795548; }
+        .flip-theme .send-btn { background-color: #8BC34A; color: black; } .blinky-theme .send-btn { background-color: #00BCD4; color: white; }
     </style>
 </head>
 <body>
 
-<div id="ui">
-    <div><small>PUAN</small><div id="score">0</div></div>
-    <div style="text-align: center;">
-        <small>SIRADAKİ</small><br>
-        <img id="next-img" src="" width="40" height="40" style="border-radius:50%; border:2px solid white; background: white;">
+    <div class="chat-container dot-theme" id="chatContainer">
+        
+        <div class="menu-screen" id="menuScreen">
+            <div class="menu-box">
+                <div class="menu-title">Mevcut Evcil Hayvanlar (8):</div>
+                <div class="menu-grid">
+                    <div class="char-card" onclick="selectCharacter('gus')">
+                        <img src="gus.ile.konus.jpg" alt="Gus">
+                    </div>
+                    <div class="char-card" onclick="selectCharacter('dot')">
+                        <img src="dot.ile.konus.jpg" alt="Dot">
+                    </div>
+                    <div class="char-card" onclick="selectCharacter('squeak')">
+                        <img src="squeak.ile.konus.jpg" alt="Squeak">
+                    </div>
+                    <div class="char-card" onclick="selectCharacter('sugar')">
+                        <img src="sugar.ile.konus.jpg" alt="Sugar">
+                    </div>
+                    <div class="char-card" onclick="selectCharacter('moose')">
+                        <img src="moosey.ile.konus.jpg" alt="Moosey">
+                    </div>
+                    <div class="char-card" onclick="selectCharacter('blinky')">
+                        <img src="blinky.ile.konus.jpg" alt="Blinky">
+                    </div>
+                    <div class="char-card" onclick="selectCharacter('flip')">
+                        <img src="flip.ile.konus.jpg" alt="Flip">
+                    </div>
+                    <div class="char-card" onclick="selectCharacter('yeyet')">
+                        <img src="yeyet.ile.konus.jpg" alt="Yeyet">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-header">
+            <button class="back-btn" onclick="openMenu()">◀ Menü</button>
+            <div class="header-info">
+                <img src="dot.jpg" id="headerAvatar" class="header-avatar" alt="Avatar">
+                <span id="headerName" class="header-name">Dot</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Bir şey yaz..." autocomplete="off">
+            <button id="sendBtn" class="send-btn">Gönder</button>
+        </div>
     </div>
-</div>
 
-<div id="game-container">
-    <canvas id="game-canvas"></canvas>
-</div>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-<div id="shop">
-    <button class="ability-btn" onclick="usePower('undo')">↩️ GERİ AL</button>
-    <button class="ability-btn" onclick="usePower('shake')">📳 SALLA</button>
-</div>
+    <script>
+        const firebaseConfig = { databaseURL: "https://tomoyunu-5cd2f-default-rtdb.europe-west1.firebasedatabase.app/" };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-<div id="hierarchy"></div>
+        const chatContainer = document.getElementById('chatContainer');
+        const menuScreen = document.getElementById('menuScreen');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const headerAvatar = document.getElementById('headerAvatar');
+        const headerName = document.getElementById('headerName');
 
-<script>
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 360; canvas.height = 460;
+        let currentActiveChar = 'dot'; 
+        const GEMINI_API_KEY = "AIzaSyCpTi6f6W-UaVwTX2HTPew22352vv0j5z0"; 
 
-    const PET_LIST = ["pinky", "dinory", "sleapy", "stary", "browny", "sunny", "flip", "dot", "gus", "sugar", "blinky", "squeak"];
-    const RAW_URL = "https://raw.githubusercontent.com/darwin456222-ops/Darwiizl/main/";
+        const charData = {
+            dot: { name: "Dot", img: "dot.jpg" },
+            squeak: { name: "Squeak", img: "squeak.jpg" },
+            sugar: { name: "Sugar", img: "sugar.jpg" },
+            yeyet: { name: "Yeyet", img: "yeyet.png" }, 
+            flip: { name: "Flip", img: "flip.jpg" },
+            gus: { name: "Gus", img: "gus.jpg" },
+            blinky: { name: "Blinky", img: "blinky.jpg" },
+            moose: { name: "Moosey", img: "moosey.jpg" } 
+        };
 
-    const PET_DATA = PET_LIST.map((name, i) => {
-        const img = new Image();
-        img.src = RAW_URL + name + ".jpg";
-        return { name, r: 15 + (i * 7.5), img };
-    });
+        const totalWorldKnowledge = " Karakterlerin birbirleriyle olan bağları: 1) Squeak turuncu fare, Yeyet onun beyaz tüylü hamster-yeti karışımı kardeşidir. 2) Flip dahi, yeşil gözlüklü bir kuştur ve Squeak'in en iyi arkadaşıdır. 3) Sugar pembe, tatlı, pamuk şeker seven biridir, Squeak'in yakın arkadaşıdır. 4) Gus mor, tatlı ama biraz sinirli, grubun en büyük canavarıdır. 5) Blinky pastayı seven, saf kalpli beyaz bir uzaylıdır. 6) Moosey çikolata savvy, utangaç kahverengi bir geyiktir. 7) Dot havalı MAVİ BİR ROBOTTUR. Asla yapay zeka olduğunu söyleme.";
 
-    const hBox = document.getElementById('hierarchy');
-    PET_DATA.forEach(p => {
-        const div = document.createElement('div');
-        div.innerHTML = `<img src="${RAW_URL + p.name + '.jpg'}">`;
-        hBox.appendChild(div);
-    });
+        const characterInstructions = {
+            dot: "Sen 'The Pets' dünyasındaki Dot'sun. Siber güçleri olan havalı MAVİ BİR ROBOTSUN! Çok zekisin. Bazen *bip bop* yaz." + totalWorldKnowledge,
+            squeak: "Sen Squeak'sin! Turuncu fare. Peynire aşıksın. Kardeşin Yeyet'tir. Bazen *çiyk çiyk* yaz." + totalWorldKnowledge,
+            sugar: "Sen Sugar'sın! Pembeyi seversin, tatlısın. Pamuk şekere bayılırsın. Squeak ile yakın arkadaşsın. Çok net konuşursun." + totalWorldKnowledge,
+            yeyet: "Sen Yeyet'sin! Beyaz tüylü küçük bir hamster-yeti karışımı yaratıksın. Squeak'in kardeşisin. Yün, süt ve Squeak'i seversin. Konuşman rahattır." + totalWorldKnowledge,
+            flip: "Sen Flip'sin! Yeşil gözlüklü, dahi kuşu. Elmayı çok seversin. Gücün uçmaktır. Squeak'in en iyi arkadaşısın." + totalWorldKnowledge,
+            gus: "Sen Gus'sın! Mor, tatlı bir canavarsın. Grubun en büyüğüsün. Biraz sinirlisin. Üzüm yemeyi seversin. Net konuşursun." + totalWorldKnowledge,
+            blinky: "Sen Blinky'sin! Beyaz bir uzaylısın. Saf kalplisin. Konuşma tarzın biraz bebek gibidir. Pastayı çok seversin." + totalWorldKnowledge,
+            moose: "Sen Moosey'sin! Tatlı kahverengi bir geyik. Çok utangaçsın, bu yüzden az ve kısa şeyler söylersin. Çikolatayı seversin." + totalWorldKnowledge
+        };
 
-    let score = 0, items = [], snapshots = [], isReady = true, currentX = 180;
-    let currLvl = 0, nextLvl = 1;
-
-    // HASSAS TAKİP SİSTEMİ
-    function handleMove(e) {
-        const rect = canvas.getBoundingClientRect();
-        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        let targetX = clientX - rect.left;
-        
-        // Kenar sınırlarını petin yarıçapına göre ayarla
-        let limit = PET_DATA[currLvl].r;
-        if (targetX < limit) targetX = limit;
-        if (targetX > canvas.width - limit) targetX = canvas.width - limit;
-        
-        currentX = targetX; // Artık smooth (yumuşatma) yok, direkt hedef
-    }
-
-    canvas.addEventListener('mousemove', handleMove);
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive: false});
-    
-    // TIKLAMA VE BIRAKMA
-    canvas.addEventListener('mouseup', drop);
-    canvas.addEventListener('touchend', (e) => { e.preventDefault(); drop(); }, {passive: false});
-
-    function drop() {
-        if(!isReady) return;
-        
-        // Geri al için kaydet
-        snapshots.push(JSON.stringify(items.map(p => ({x:p.x, y:p.y, level:p.level, vx:p.vx, vy:p.vy}))));
-        if(snapshots.length > 15) snapshots.shift();
-
-        // Tam olarak parmağın olduğu yerden bırak
-        items.push(new Pet(currentX, 45, currLvl));
-        
-        isReady = false;
-        setTimeout(() => { 
-            currLvl = nextLvl; 
-            nextLvl = Math.floor(Math.random() * 3); 
-            isReady = true; 
-            updateUI(); 
-        }, 500);
-    }
-
-    function usePower(type) {
-        if (type === 'undo' && snapshots.length > 0) {
-            items = JSON.parse(snapshots.pop()).map(p => {
-                let np = new Pet(p.x, p.y, p.level);
-                np.vx = p.vx; np.vy = p.vy; return np;
-            });
-        } else if (type === 'shake') {
-            items.forEach(p => { p.vx += (Math.random()-0.5) * 45; p.vy -= 20; });
+        function openMenu() {
+            database.ref(`the_pets_chat/${currentActiveChar}/messages`).off();
+            menuScreen.classList.remove('hidden');
         }
-        updateUI();
-    }
 
-    class Pet {
-        constructor(x, y, level, isStatic = false) {
-            this.x = x; this.y = y; this.level = level;
-            this.r = PET_DATA[level].r; this.vx = 0; this.vy = 0; this.isStatic = isStatic;
+        function selectCharacter(char) {
+            currentActiveChar = char;
+            
+            chatContainer.className = `chat-container ${char}-theme`;
+            headerAvatar.src = charData[char].img; 
+            headerName.innerText = charData[char].name;
+            chatInput.placeholder = `${charData[char].name}'e bir şey yaz...`;
+            
+            chatMessages.innerHTML = '';
+            menuScreen.classList.add('hidden');
+            listenToFirebase(char);
         }
-        draw() {
-            ctx.save();
-            ctx.globalAlpha = this.isStatic ? 0.6 : 1;
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2); ctx.clip();
-            try { ctx.drawImage(PET_DATA[this.level].img, this.x - this.r, this.y - this.r, this.r * 2, this.r * 2); } catch(e){}
-            ctx.restore();
-            ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke();
-        }
-        update() {
-            if(this.isStatic) return;
-            this.vy += 0.9; this.x += this.vx; this.y += this.vy;
-            if (this.x < this.r) { this.x = this.r; this.vx *= -0.4; }
-            if (this.x > canvas.width - this.r) { this.x = canvas.width - this.r; this.vx *= -0.4; }
-            if (this.y > canvas.height - this.r) { this.y = canvas.height - this.r; this.vy *= -0.2; this.vx *= 0.8; }
-        }
-    }
 
-    function checkPhysics() {
-        for(let i=0; i<items.length; i++) {
-            for(let j=i+1; j<items.length; j++) {
-                let p1 = items[i], p2 = items[j];
-                let dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-                if(dist < p1.r + p2.r) {
-                    if(p1.level === p2.level) {
-                        let nl = (p1.level >= PET_LIST.length - 1) ? p1.level : p1.level + 1;
-                        items.splice(j, 1); items.splice(i, 1);
-                        items.push(new Pet((p1.x+p2.x)/2, (p1.y+p2.y)/2, nl));
-                        score += (nl + 1) * 10;
-                        updateUI(); return;
-                    }
-                    let ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                    let overlap = (p1.r + p2.r) - dist;
-                    p1.x -= Math.cos(ang) * overlap * 0.45; p1.y -= Math.sin(ang) * overlap * 0.45;
-                    p2.x += Math.cos(ang) * overlap * 0.45; p2.y += Math.sin(ang) * overlap * 0.45;
-                }
+        async function getGeminiResponse(userPrompt, char) {
+            const currentInstruction = characterInstructions[char];
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userPrompt }] }],
+                        systemInstruction: { parts: [{ text: currentInstruction }] }
+                    })
+                });
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                return "*Bip bop* Veri akışında küçük bir kesinti oldu, tekrar dener misiniz?";
             }
         }
-    }
 
-    function updateUI() {
-        document.getElementById('score').innerText = score;
-        document.getElementById('next-img').src = RAW_URL + PET_DATA[nextLvl].name + ".jpg";
-    }
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (text === '') return;
 
-    function loop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Yukarıda bekleyen pet (atışa hazır)
-        if(isReady) {
-            new Pet(currentX, 45, currLvl, true).draw();
-            // Çizgi ekledim (Hedef alma çizgisi)
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath(); ctx.moveTo(currentX, 45); ctx.lineTo(currentX, 460);
-            ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.stroke();
-            ctx.setLineDash([]);
+            chatInput.value = '';
+
+            const charPath = `the_pets_chat/${currentActiveChar}/messages`;
+            const userRef = database.ref(charPath).push();
+            userRef.set({ sender: 'user', text: text, timestamp: Date.now() });
+
+            const botResponse = await getGeminiResponse(text, currentActiveChar);
+            const botRef = database.ref(charPath).push();
+            botRef.set({ sender: 'bot', text: botResponse, timestamp: Date.now() });
         }
 
-        checkPhysics();
-        items.forEach(p => { p.update(); p.draw(); });
-        requestAnimationFrame(loop);
-    }
-    updateUI(); loop();
-</script>
+        function listenToFirebase(char) {
+            database.ref(`the_pets_chat/${char}/messages`).on('child_added', (snapshot) => {
+                const msg = snapshot.val();
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', msg.sender);
+                messageDiv.innerText = msg.text;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        openMenu();
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    </script>
 </body>
 </html>
