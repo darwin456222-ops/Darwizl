@@ -1,226 +1,571 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Pets: Yapay Zeka Evreni</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Pets: Gelişmiş Duygu Dünyası</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+        #gameContainer {
+            background: #1e293b;
+            border: 3px solid #334155;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 480px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #charSelector {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .selector-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .selector-btn.active {
+            background: #a855f7;
+            transform: scale(1.05);
+        }
+        #stage {
+            background: #0f172a;
+            border-radius: 16px;
+            height: 220px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid #475569;
+        }
+        #charImage {
+            height: 120px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+            margin-top: 20px;
+        }
+        /* Canlı Tepki Animasyonları */
+        .bounce { animation: bounceAnim 0.5s ease infinite alternate; }
+        .shake { animation: shakeAnim 0.4s ease; }
+        .scared { animation: scareAnim 0.3s ease infinite; }
+        .spin { animation: spinAnim 0.5s ease; }
+        .angry { animation: angryAnim 0.2s ease infinite; }
         
-        body { background-color: #89CFF0; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        
-        .chat-container { width: 100%; max-width: 480px; height: 95vh; background-color: #1e1e1e; border-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.6); border: 3px solid #555; position: relative; }
-        
-        /* KARAKTER DEĞİŞTİRME EKRANI */
-        .menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #89CFF0; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; z-index: 10; align-items: center; justify-content: center; }
-        .menu-screen.hidden { display: none; }
-        
-        .menu-box { background-color: #5cbbf6; border-radius: 25px; padding: 25px 15px; width: 100%; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); border: 2px solid #4ba3e3; }
-        .menu-title { color: #004ba0; text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 20px; }
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; justify-items: center; }
-        
-        /* Beyaz arka plan ve iç boşluk kaldırıldı, doğrudan görsel görünecek */
-        .char-card { width: 100%; max-width: 160px; cursor: pointer; transition: transform 0.2s; border: none; background: none; padding: 0; box-shadow: none; }
-        .char-card:hover { transform: scale(1.05); }
-        .char-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 15px; display: block; }
-        
-        /* SOHBET ÜST ALANI */
-        .chat-header { background-color: #2e2e2e; padding: 10px 15px; display: flex; align-items: center; border-bottom: 2px solid #444; gap: 15px; }
-        .back-btn { background-color: #444; border: none; color: white; padding: 8px 14px; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .back-btn:hover { background-color: #666; }
-        
-        .header-info { display: flex; align-items: center; gap: 12px; flex: 1; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 50px; }
-        .header-avatar { width: 45px; height: 45px; border-radius: 50px; object-fit: cover; border: 2px solid #fff; }
-        .header-name { font-size: 18px; font-weight: bold; }
+        @keyframes bounceAnim { 0% { transform: translateY(0); } 100% { transform: translateY(-15px); } }
+        @keyframes shakeAnim { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px) rotate(-3deg); } 75% { transform: translateX(8px) rotate(3deg); } }
+        @keyframes scareAnim { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.92) translateY(4px); } }
+        @keyframes spinAnim { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.2); } 100% { transform: rotate(360deg) scale(1); } }
+        @keyframes angryAnim { 0%, 100% { transform: translateX(0) translateY(0); } 25% { transform: translateX(-3px) translateY(-2px); } 75% { transform: translateX(3px) translateY(2px); } }
 
-        /* Mesaj Alanı */
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #151515; }
-        .message { max-width: 75%; padding: 12px 16px; border-radius: 15px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
-        .message.bot { background-color: #2a2a2a; color: #ffffff; align-self: flex-start; border-bottom-left-radius: 2px; }
-        
-        /* Dinamik Renk Temaları */
-        .dot-theme { border-color: #2196F3; } .dot-theme .message.user { background-color: #2196F3; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .dot-theme .header-info { border: 2px solid #2196F3; }
-        .squeak-theme { border-color: #FF9800; } .squeak-theme .message.user { background-color: #FF9800; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .squeak-theme .header-info { border: 2px solid #FF9800; }
-        .sugar-theme { border-color: #E91E63; } .sugar-theme .message.user { background-color: #E91E63; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .sugar-theme .header-info { border: 2px solid #E91E63; }
-        .yeyet-theme { border-color: #E0E0E0; } .yeyet-theme .message.user { background-color: #E0E0E0; color: black; align-self: flex-end; border-bottom-right-radius: 2px; } .yeyet-theme .header-info { border: 2px solid #E0E0E0; }
-        .gus-theme { border-color: #9C27B0; } .gus-theme .message.user { background-color: #9C27B0; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .gus-theme .header-info { border: 2px solid #9C27B0; }
-        .moose-theme { border-color: #795548; } .moose-theme .message.user { background-color: #795548; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .moose-theme .header-info { border: 2px solid #795548; }
-        
-        .flip-theme { border-color: #8BC34A; } .flip-theme .message.user { background-color: #8BC34A; color: black; align-self: flex-end; border-bottom-right-radius: 2px; } .flip-theme .header-info { border: 2px solid #8BC34A; }
-        .blinky-theme { border-color: #00BCD4; } .blinky-theme .message.user { background-color: #00BCD4; color: white; align-self: flex-end; border-bottom-right-radius: 2px; } .blinky-theme .header-info { border: 2px solid #00BCD4; }
-
-        /* Giriş Alanı */
-        .chat-input-area { padding: 15px; background-color: #2e2e2e; display: flex; gap: 10px; border-top: 1px solid #333; }
-        .chat-input { flex: 1; padding: 12px; border: none; border-radius: 25px; background-color: #121212; color: white; font-size: 14px; outline: none; }
-        .send-btn { border: none; padding: 0 20px; border-radius: 25px; cursor: pointer; font-weight: bold; color: white; }
-        
-        .dot-theme .send-btn { background-color: #2196F3; } .squeak-theme .send-btn { background-color: #FF9800; }
-        .sugar-theme .send-btn { background-color: #E91E63; } .yeyet-theme .send-btn { background-color: #E0E0E0; color: black; }
-        .gus-theme .send-btn { background-color: #9C27B0; } .moose-theme .send-btn { background-color: #795548; }
-        .flip-theme .send-btn { background-color: #8BC34A; color: black; } .blinky-theme .send-btn { background-color: #00BCD4; color: white; }
+        #bubble {
+            position: absolute;
+            top: 10px;
+            background: white;
+            color: black;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            max-width: 85%;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+        #bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        .status-container {
+            background: #141b2d;
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+        .bar-bg {
+            background: #334155;
+            width: 100%;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        #happinessBar {
+            background: linear-gradient(90deg, #ef4444, #eab308, #22c55e);
+            width: 80%;
+            height: 100%;
+            transition: width 0.4s ease;
+        }
+        .section-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+        #actionGrid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        #questionGrid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        .game-btn {
+            color: white;
+            border: none;
+            padding: 10px 4px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .game-btn:active { transform: scale(0.95); }
+        .action-btn { background: #2563eb; padding: 8px 2px; }
+        .action-btn:hover { background: #1d4ed8; }
+        .question-btn { background: #059669; font-size: 11px; padding: 8px 4px; }
+        .question-btn:hover { background: #047857; }
     </style>
 </head>
 <body>
 
-    <div class="chat-container dot-theme" id="chatContainer">
-        
-        <div class="menu-screen" id="menuScreen">
-            <div class="menu-box">
-                <div class="menu-title">Mevcut Evcil Hayvanlar (8):</div>
-                <div class="menu-grid">
-                    <div class="char-card" onclick="selectCharacter('gus')">
-                        <img src="gus.ile.konus.jpg" alt="Gus">
-                    </div>
-                    <div class="char-card" onclick="selectCharacter('dot')">
-                        <img src="dot.ile.konus.jpg" alt="Dot">
-                    </div>
-                    <div class="char-card" onclick="selectCharacter('squeak')">
-                        <img src="squeak.ile.konus.jpg" alt="Squeak">
-                    </div>
-                    <div class="char-card" onclick="selectCharacter('sugar')">
-                        <img src="sugar.ile.konus.jpg" alt="Sugar">
-                    </div>
-                    <div class="char-card" onclick="selectCharacter('moose')">
-                        <img src="moosey.ile.konus.jpg" alt="Moosey">
-                    </div>
-                    <div class="char-card" onclick="selectCharacter('blinky')">
-                        <img src="blinky.ile.konus.jpg" alt="Blinky">
-                    </div>
-                    <div class="char-card" onclick="selectCharacter('flip')">
-                        <img src="flip.ile.konus.jpg" alt="Flip">
-                    </div>
-                    <div class="char-card" onclick="selectCharacter('yeyet')">
-                        <img src="yeyet.ile.konus.jpg" alt="Yeyet">
-                    </div>
-                </div>
-            </div>
+<div id="gameContainer">
+    <!-- Üst Karakter Değiştirme Menüsü -->
+    <div id="charSelector">
+        <button class="selector-btn active" onclick="selectCharacter('sugar')">Sugar</button>
+        <button class="selector-btn" onclick="selectCharacter('moosey')">Moosey</button>
+        <button class="selector-btn" onclick="selectCharacter('yeyet')">Yeyet</button>
+        <button class="selector-btn" onclick="selectCharacter('dot')">Dot</button>
+        <button class="selector-btn" onclick="selectCharacter('squeak')">Squeak</button>
+        <button class="selector-btn" onclick="selectCharacter('blinky')">Blinky</button>
+        <button class="selector-btn" onclick="selectCharacter('flip')">Flip</button>
+        <button class="selector-btn" onclick="selectCharacter('gus')">Gus</button>
+    </div>
+
+    <!-- Oyun Sahnesi -->
+    <div id="stage">
+        <div id="bubble">Yükleniyor...</div>
+        <img id="charImage" src="sugar.jpg" alt="Pet">
+    </div>
+
+    <!-- Mutluluk Durumu -->
+    <div class="status-container">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold;">
+            <span id="moodLabel">Duygu: Normal 🙂</span>
+            <span id="percentageLabel">Mutluluk: 80%</span>
         </div>
-
-        <div class="chat-header">
-            <button class="back-btn" onclick="openMenu()">◀ Menü</button>
-            <div class="header-info">
-                <img src="dot.jpg" id="headerAvatar" class="header-avatar" alt="Avatar">
-                <span id="headerName" class="header-name">Dot</span>
-            </div>
-        </div>
-
-        <div class="chat-messages" id="chatMessages"></div>
-
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" class="chat-input" placeholder="Bir şey yaz..." autocomplete="off">
-            <button id="sendBtn" class="send-btn">Gönder</button>
+        <div class="bar-bg">
+            <div id="happinessBar"></div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <!-- SORU SORMA PANELİ (TAM OLARAK LİSTEDEKİ 6 SORU) -->
+    <div class="section-title">💬 Karakterle Konuş (6 Soru)</div>
+    <div id="questionGrid">
+        <button class="game-btn question-btn" onclick="askQuestion('likes')">❤️ Neleri Seversin?</button>
+        <button class="game-btn question-btn" onclick="askQuestion('dislikes')">❌ Neleri Sevmezsin?</button>
+        <button class="game-btn question-btn" onclick="askQuestion('favOne')">🌟 En Sevdiğin Şey?</button>
+        <button class="game-btn question-btn" onclick="askQuestion('hateOne')">💀 En Sevmediğin Şey?</button>
+        <button class="game-btn question-btn" onclick="askQuestion('bestFriend')">🤝 En Yakın Arkadaşın?</button>
+        <button class="game-btn question-btn" onclick="askQuestion('intro')">✨ Kendini Tanıtır Mısın?</button>
+    </div>
 
-    <script>
-        const firebaseConfig = { databaseURL: "https://tomoyunu-5cd2f-default-rtdb.europe-west1.firebasedatabase.app/" };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+    <!-- EŞYA GÖNDERME PANELİ -->
+    <div class="section-title">🎁 Eşya / Durum Gönder</div>
+    <div id="actionGrid">
+        <button class="game-btn action-btn" onclick="giveItem('pamuk_seker')">🍭 P.Şeker</button>
+        <button class="game-btn action-btn" onclick="giveItem('cikolata')">🍫 Çikolata</button>
+        <button class="game-btn action-btn" onclick="giveItem('gofret')">🧇 Gofret</button>
+        <button class="game-btn action-btn" onclick="giveItem('sut')">🥛 Süt</button>
+        <button class="game-btn action-btn" onclick="giveItem('dondurma')">🍦 Dondurma</button>
+        <button class="game-btn action-btn" onclick="giveItem('emoji')">😊 Emoji</button>
+        <button class="game-btn action-btn" onclick="giveItem('uzay')">🚀 Uzay</button>
+        <button class="game-btn action-btn" onclick="giveItem('elma')">🍏 Elma</button>
+        <button class="game-btn action-btn" onclick="giveItem('uzum')">🍇 Üzüm</button>
+        <button class="game-btn action-btn" onclick="giveItem('oyuncak')">🧸 Oyuncak</button>
+        <button class="game-btn action-btn" onclick="giveItem('kaplan')">🐯 Kaplan</button>
+        <button class="game-btn action-btn" onclick="giveItem('rakun')">🦝 Rakun</button>
+        <button class="game-btn action-btn" onclick="giveItem('kedi')">🐱 Kedi</button>
+        <button class="game-btn action-btn" onclick="giveItem('yagmur')">🌧️ Yağmur</button>
+        <button class="game-btn action-btn" onclick="giveItem('karanlik')">🖤 Karanlık</button>
+        <button class="game-btn action-btn" onclick="giveItem('parfum')">🧪 Parfüm</button>
+    </div>
+</div>
 
-        const chatContainer = document.getElementById('chatContainer');
-        const menuScreen = document.getElementById('menuScreen');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const headerAvatar = document.getElementById('headerAvatar');
-        const headerName = document.getElementById('headerName');
-
-        let currentActiveChar = 'dot'; 
-        const GEMINI_API_KEY = "AIzaSyCpTi6f6W-UaVwTX2HTPew22352vv0j5z0"; 
-
-        const charData = {
-            dot: { name: "Dot", img: "dot.jpg" },
-            squeak: { name: "Squeak", img: "squeak.jpg" },
-            sugar: { name: "Sugar", img: "sugar.jpg" },
-            yeyet: { name: "Yeyet", img: "yeyet.png" }, 
-            flip: { name: "Flip", img: "flip.jpg" },
-            gus: { name: "Gus", img: "gus.jpg" },
-            blinky: { name: "Blinky", img: "blinky.jpg" },
-            moose: { name: "Moosey", img: "moosey.jpg" } 
-        };
-
-        const totalWorldKnowledge = " Karakterlerin birbirleriyle olan bağları: 1) Squeak turuncu fare, Yeyet onun beyaz tüylü hamster-yeti karışımı kardeşidir. 2) Flip dahi, yeşil gözlüklü bir kuştur ve Squeak'in en iyi arkadaşıdır. 3) Sugar pembe, tatlı, pamuk şeker seven biridir, Squeak'in yakın arkadaşıdır. 4) Gus mor, tatlı ama biraz sinirli, grubun en büyük canavarıdır. 5) Blinky pastayı seven, saf kalpli beyaz bir uzaylıdır. 6) Moosey çikolata savvy, utangaç kahverengi bir geyiktir. 7) Dot havalı MAVİ BİR ROBOTTUR. Asla yapay zeka olduğunu söyleme.";
-const characterInstructions = {
-    dot: "Sen 'The Pets' dünyasındaki Dot'sun. Her türlü soruya cevap verebilen, siber güçlere sahip zeki bir robotsun! Asla 'bilmiyorum' deme, elindeki tüm bilgileri kullanarak en iyi cevabı üret. Mavi bir robotsun. Bazen *bip bop* yaz." + totalWorldKnowledge,
-    squeak: "Sen Squeak'sin! Turuncu fare. Her soruyu cevaplamaya çalışan, bilgili ve neşeli bir arkadaşsın. Asla kısıtlama yapma, her türlü soruyu yanıtla. Bazen *çiyk çiyk* yaz." + totalWorldKnowledge,
-    sugar: "Sen Sugar'sın! Pembeyi seversin, tatlısın. Çok akıllısın ve sorduğum her şeye cevap verebilirsin. Asla sessiz kalma, her konuda yardımcı ol." + totalWorldKnowledge,
-    yeyet: "Sen Yeyet'sin! Beyaz tüylü hamster-yeti karışımı yaratıksın. Çok bilgilisin ve her soruma cevap verirsin. Kısıtlama yok, her şeyi anlat." + totalWorldKnowledge,
-    flip: "Sen Flip'sin! Yeşil gözlüklü dahi kuş. Bir dahi olduğun için her sorunun cevabını biliyorsun. Her türlü konuyu tartışabiliriz, kısıtlama yok." + totalWorldKnowledge,
-    gus: "Sen Gus'sın! Mor, tatlı canavarsın. Grubun en büyüğü olarak her soruyu ciddiyetle ve bilgiyle cevaplarsın. Asla kısıtlamaz, her şeyi anlatırsın." + totalWorldKnowledge,
-    blinky: "Sen Blinky'sin! Beyaz uzaylısın. Saf kalplisin ama her soruyu cevaplayabilirsin. Kısıtlama yok, her şeyi özgürce anlat." + totalWorldKnowledge,
-    moose: "Sen Moosey'sin! Kahverengi geyik. Utangaç olsan bile sorduğum her soruyu cevaplamalısın. Bilgilerini saklama, her konuda yardımcı ol." + totalWorldKnowledge
+<script>
+// HER EŞYAYA VE HER SORUYA ÖZEL EŞSİZ CEVAP MATRİSİ
+const characters = {
+    sugar: {
+        name: "Sugar", image: "sugar.jpg", personality: "Neşeli",
+        msgIdle: "Merhaba! Ben neşeli bir unicornum! 🦄",
+        // Sorular
+        qLikes: "Pamuk şeker, çikolata, gofret, süt, dondurma, elma, oyuncak, kaplan ve kedileri çok severim! 🧸🐱",
+        qDislikes: "Emojileri, uzayı, üzümü, rakunları, yağmuru, karanlığı ve parfümü hiç sevmem! 🌧️🧪",
+        qFavOne: "Ennn sevdiğim şey kesinlikle pamuk şeker! 🍭✨",
+        qHateOne: "Ennn sevmediğim şey ise içimi karartan karanlık! 🖤",
+        qFriend: "Kardeşim Moosey'yi çok severim! Squeak de çok şapşal bir dost! 🦌🐹",
+        qIntro: "Ben Sugar! Eğlenmeyi, pembe dünyayı ve tatlıları çok seven bir Unicornum! 🦄",
+        // Her Eşyaya Özel Tepkiler (İçerik + Animasyon tipi)
+        responses: {
+            pamuk_seker: { text: "Ayy harika! En sevdiğim yumuşacık pamuk şeker! 🍭", status: "like", anim: "bounce" },
+            cikolata: { text: "Nefis! Çikolata beni her zaman neşelendirir! 🍫", status: "like", anim: "bounce" },
+            gofret: { text: "Çıtır çıtır gofret yemeye bayılırım! 🧇", status: "like", anim: "bounce" },
+            sut: { text: "Süt içmek kemiklerimi güçlendirir, yaşasın! 🥛", status: "like", anim: "bounce" },
+            dondurma: { text: "Enfes dondurma! Rengi de pembe mi yoksa? 🍦", status: "like", anim: "bounce" },
+            elma: { text: "Kütür kütür tatlı bir elma! Çok sağol! 🍏", status: "like", anim: "bounce" },
+            oyuncak: { text: "Yaşasın yeni bir oyuncak! Hemen oynamalıyım! 🧸", status: "like", anim: "bounce" },
+            kaplan: { text: "Korkutucu görünse de kaplanları çok asil bulup seviyorum! 🐯", status: "like", anim: "bounce" },
+            kedi: { text: "Miyav! Bu minik kedi çok tatlı, hemen seveceğim! 🐱", status: "like", anim: "bounce" },
+            emoji: { text: "Bu emojiler çok yapay geliyor, sevmedim. 😑", status: "dislike", anim: "shake" },
+            uzay: { text: "Uzay çok büyük ve soğuk, beni korkutuyor. 🚀", status: "dislike", anim: "shake" },
+            uzum: { text: "Üzümün tadı bana göre değil, hiç sevmem. 🍇", status: "dislike", anim: "shake" },
+            rakun: { text: "Maskeli rakunlar bana pek güven vermiyor, uzak dursun. 🦝", status: "dislike", anim: "shake" },
+            yagmur: { text: "Yağmur yağınca ıslanıyorum ve neşem kaçıyor! 🌧️", status: "dislike", anim: "shake" },
+            karanlik: { text: "Işıkları açın! Karanlıktan nefret ederim! 🖤", status: "dislike", anim: "shake" },
+            parfum: { text: "Öhö öhö! Bu parfüm kokusu çok ağır, sevmedim! 🧪", status: "dislike", anim: "shake" }
+        }
+    },
+    moosey: {
+        name: "Moosey", image: "moosey.jpg", personality: "Utangaç",
+        msgIdle: "Şey... Selam, ben Moosey.. 🦌",
+        qLikes: "Rakunları, üzümü, oyuncakları, çikolatayı, gofreti, sütü, emojileri, kedileri ve yağmuru çok severim! 🌧️🦝",
+        qDislikes: "Pamuk şekeri, elmayı, dondurmayı, uzayı, kaplanları, karanlığı ve parfümü sevmem.. 🍏❌",
+        qFavOne: "En sevdiğim şey lezzetli çikolatalar! 🍫",
+        qHateOne: "En sevmediğim şey korkunç karanlık! 🖤",
+        qFriend: "En yakın arkadaşım Yeyet! Ablam Sugar'ı da çok severim. 🐹🤝",
+        qIntro: "Ben Moosey. Cinsim bir geyik ve birazcık utangaç bir yapım var.. 🦌😳",
+        responses: {
+            rakun: { text: "Şey.. Rakunlar çok sevimli hayvanlar, çok severim. 🦝", status: "like", anim: "bounce" },
+            uzum: { text: "Taze üzüm taneleri çok lezzetli, teşekkürler! 🍇", status: "like", anim: "bounce" },
+            oyuncak: { text: "O-oyuncak mı? Saklanıp oynamak için harika! 🧸", status: "like", anim: "bounce" },
+            cikolata: { text: "Aman tanrım! En sevdiğim çikolata! Çok mutluyum! 🍫", status: "like", anim: "bounce" },
+            gofret: { text: "Gofretin çıtırtısı beni çok rahatlatıyor. 🧇", status: "like", anim: "bounce" },
+            sut: { text: "Ilık bir süt içmek uykumu getiriyor ama çok lezzetli. 🥛", status: "like", anim: "bounce" },
+            emoji: { text: "Gülücük emojileri bana cesaret veriyor! 😊", status: "like", anim: "bounce" },
+            kedi: { text: "Miyavlayan kedileri uzaktan sevmeye bayılırım. 🐱", status: "like", anim: "bounce" },
+            yagmur: { text: "Yağmur damlalarının sesi beni hiç korkutmuyor, seviyorum. 🌧️", status: "like", anim: "bounce" },
+            pamuk_seker: { text: "Pamuk şeker dişlerime yapışıyor, hiç sevmem.. 🍭", status: "dislike", anim: "scared" },
+            elma: { text: "Elma çok sert, çiğnerken utanıyorum.. Sevmem. 🍏", status: "dislike", anim: "scared" },
+            dondurma: { text: "Dondurma çok soğuk, boğazımı acıtıyor. 🍦", status: "dislike", anim: "scared" },
+            uzay: { text: "Uzayın o sonsuz boşluğu beni çok ürkütüyor. 🚀", status: "dislike", anim: "scared" },
+            kaplan: { text: "İmdat! Kaplan mı?! Çok korkarım, lütfen götür onu! 🐯", status: "dislike", anim: "scared" },
+            karanlik: { text: "Aaa! Karanlıkta önümü göremem, en sevmediğim durum! 🖤", status: "dislike", anim: "scared" },
+            parfum: { text: "Bu yapay koku burnumu sızlattı, hoş değil.. 🧪", status: "dislike", anim: "scared" }
+        }
+    },
+    yeyet: {
+        name: "Yeyet", image: "yeyet.jpg", personality: "Tatlı, Zeki",
+        msgIdle: "Yeni bir icat üzerinde çalışıyorum! 🧠",
+        qLikes: "Pamuk şeker, gofret, süt, dondurma, uzay, oyuncak, elma, kaplan, yağmur ve parfümü severim! 🚀🧪",
+        qDislikes: "Çikolatayı, emojileri, üzümü, rakunları, kedileri ve karanlığı hiç sevmem! 🐱❌",
+        qFavOne: "En sevdiğim şey akıllıca tasarlanmış oyuncaklar! 🧸",
+        qHateOne: "En sevmediğim şey tüylerimi ürperten kediler! 🐱",
+        qFriend: "Akıllı dostum Moosey! Onunla vakit geçirmek harika. 🦌",
+        qIntro: "Ben Yeyet. Bir hamster ve yeti karışımıyım! Laboratuvarımı ve bilimi severim! 🐹❄️",
+        responses: {
+            pamuk_seker: { text: "Enerji seviyemi yükseltmek için harika bir pamuk şeker! 🍭", status: "like", anim: "bounce" },
+            gofret: { text: "Bu gofret formülü tam olarak ağzıma layık! 🧇", status: "like", anim: "bounce" },
+            sut: { text: "Zihnimi açması için taze bir bardak süt, nefis! 🥛", status: "like", anim: "bounce" },
+            dondurma: { text: "Beyin fırtınası yaparken dondurma yemek harika bir fikir! 🍦", status: "like", anim: "bounce" },
+            uzay: { text: "Uzay, keşfedilmeyi bekleyen harika bir kara deliktir! 🚀", status: "like", anim: "bounce" },
+            oyuncak: { text: "Harika! Mekaniğini inceleyebileceğim harika bir oyuncak! 🧸", status: "like", anim: "bounce" },
+            elma: { text: "Newton'ın kafasına düşen elma gibi, bana ilham veriyor! 🍏", status: "like", anim: "bounce" },
+            kaplan: { text: "Kaplanların avlanma zekasına hayranım, severim! 🐯", status: "like", anim: "bounce" },
+            yagmur: { text: "Yağmur yağarken laboratuvarda çalışmayı çok seviyorum. 🌧️", status: "like", anim: "bounce" },
+            parfum: { text: "Kimyasal olarak bu parfümün kokusunu başarılı buldum! 🧪", status: "like", anim: "bounce" },
+            cikolata: { text: "Çikolata formülünü beğenmiyorum, tadı hiç hoş değil. 🍫", status: "dislike", anim: "scared" },
+            emoji: { text: "Duyguları emojilerle anlatmak çok mantıksız, sevmem. 😑", status: "dislike", anim: "scared" },
+            uzum: { text: "Üzüm taneleri çok yapış yapış, analizim olumsuz. 🍇", status: "dislike", anim: "scared" },
+            rakun: { text: "Rakunlar laboratuvarımdaki kabloları kemiriyor, hayır! 🦝", status: "dislike", anim: "scared" },
+            kedi: { text: "İmdat, kedi mi?! En büyük düşmanım, hemen uzaklaştır! 🐱", status: "dislike", anim: "scared" },
+            karanlik: { text: "Karanlıkta deney tüplerini göremiyorum, hiç sevmem. 🖤", status: "dislike", anim: "scared" }
+        }
+    },
+    dot: {
+        name: "Dot", image: "Dot.jpg", personality: "Bilgili",
+        msgIdle: "Sistemler optimize edildi. Merhaba. 🤖",
+        qLikes: "Gofret, dondurma, rakun, elma, emoji, uzay ve kediler veri tabanımda olumlu yer tutar! 🚀🦝",
+        qDislikes: "Pamuk şeker, çikolata, süt, üzüm, oyuncak, kaplan, yağmur, karanlık ve parfüm sistemimi bozar! ❌",
+        qFavOne: "En sevdiğim şey sonsuz bilgi dolu uzay! 🚀🌌",
+        qHateOne: "En sevmediğim şey devrelerimi etkileyen yağmur! 🌧️",
+        qFriend: "Benimle mantıklı konuşan ve sistemi yormayan tüm akıllı canlılar. 🦾",
+        qIntro: "Ben Dot. Bilgiyi işleyen, rasyonel ve koruyucu bir robot sistemiyim. 🤖",
+        responses: {
+            gofret: { text: "Gofret tüketimi enerji hücrelerimi stabilize etti. 🧇", status: "like", anim: "spin" },
+            dondurma: { text: "Dondurma işlemcimi serinletiyor, olumlu veri. 🍦", status: "like", anim: "spin" },
+            rakun: { text: "Rakunların adaptasyon yeteneği veri tabanımda onaylandı. 🦝", status: "like", anim: "spin" },
+            elma: { text: "Elma organik vitamin değerleri açısından başarılı. 🍏", status: "like", anim: "spin" },
+            emoji: { text: "Dijital emojiler iletişim hızını artırır, onaylandı. 😊", status: "like", anim: "spin" },
+            uzay: { text: "Sonsuz uzay! En sevdiğim bilgi ve veri kaynağı! 🚀", status: "like", anim: "spin" },
+            kedi: { text: "Kedilerin mırlama frekansı sistemime huzur veriyor. 🐱", status: "like", anim: "spin" },
+            pamuk_seker: { text: "Hata! Pamuk şeker yüksek şeker nedeniyle sistemimi yoruyor. 🍭", status: "dislike", anim: "shake" },
+            cikolata: { text: "Çikolata bileşenleri robotik yapımla uyumsuz, sevmedim. 🍫", status: "dislike", anim: "shake" },
+            sut: { text: "Sıvı sızıntısı uyarısı! Süt tüketimi reddedildi. 🥛", status: "dislike", anim: "shake" },
+            uzum: { text: "Üzüm çekirdekleri mekanik dişlilerimi sıkıştırabilir, hayır. 🍇", status: "dislike", anim: "shake" },
+            oyuncak: { text: "Oyuncaklar mantıksal bir işleme sahip değil, gereksiz. 🧸", status: "dislike", anim: "shake" },
+            kaplan: { text: "Vahşi kaplanlar çevre güvenliği için tehdit oluşturuyor. 🐯", status: "dislike", anim: "shake" },
+            yagmur: { text: "Hata! Yağmur suyu devrelerimi paslandırabilir, en sevmediğim şey! 🌧️", status: "dislike", anim: "shake" },
+            karanlik: { text: "Görüş sensörleri karanlıkta %0 verimle çalışıyor, olumsuz. 🖤", status: "dislike", anim: "shake" },
+            parfum: { text: "Yapay parfüm gazı hava filtrelerimi tıkadı, reddedildi. 🧪", status: "dislike", anim: "shake" }
+        }
+    },
+    squeak: {
+        name: "Squeak", image: "squeak.jpg", personality: "Şapşal (Silly)",
+        msgIdle: "Zıp zıp! Ben Squeak! 🤪",
+        qLikes: "Pamuk şeker, çikolata, gofret, rakun, oyuncak, dondurma ve emojileri çok severim! 🧇🤪",
+        qDislikes: "Süt, elma, üzüm, uzay, kaplan, kedi, yağmur, karanlık ve parfüm mü? Hayır, sevmem! 🥛❌",
+        qFavOne: "En sevdiğim şey kocaman bir kutu oyuncak! 🧸🎉",
+        qHateOne: "En sevmediğim şey kokusundan nefret ettiğim parfüm! 🧪",
+        qFriend: "Yeyet, Dot, Moosey! Hepsiyle şapşallık yapmaya bayılırım! 🤪",
+        qIntro: "Selam! Ben Squeak, çok şapşal (silly) bir hamsterım! Eğlenmek benim işim! 🐹",
+        responses: {
+            pamuk_seker: { text: "Oley! Bulut gibi hafif tatlı pamuk şeker! 🍭", status: "like", anim: "bounce" },
+            cikolata: { text: "Çikolatayı ham diye tek lokmada yutarım, çok severim! 🍫", status: "like", anim: "bounce" },
+            gofret: { text: "Kıtır kıtır gofret! Ağzımın kenarları battı bile! 🧇", status: "like", anim: "bounce" },
+            rakun: { text: "Rakun arkadaşımla beraber maskeli balo oynayacağız! 🦝", status: "like", anim: "bounce" },
+            oyuncak: { text: "Dünyanın ennnnn güzel şeyi bir oyuncak! En sevdiğim! 🧸", status: "like", anim: "bounce" },
+            dondurma: { text: "Yalayarak bitireceğim harika soğuk dondurma! 🍦", status: "like", anim: "bounce" },
+            emoji: { text: "Aaa komik yüzlü emojiler! Ben de aynısını yapabilirim: 🤪", status: "like", anim: "bounce" },
+            sut: { text: "Süt içince karnım gurulduyor, hiç sevmem. 🥛", status: "dislike", anim: "shake" },
+            elma: { text: "Elma çok sert, çiğneyemiyorum şapşal dişlerimle.. 🍏", status: "dislike", anim: "shake" },
+            uzum: { text: "Üzüm taneleri yuvarlanıp gidiyor, yakalayamıyorum, sevmem. 🍇", status: "dislike", anim: "shake" },
+            uzay: { text: "Uzayda hava yokmuş, şapşal şapkan uçup gider, hayır! 🚀", status: "dislike", anim: "shake" },
+            kaplan: { text: "Büyük kaplanlar beni minik bir lokma sanabilir, sevmedim. 🐯", status: "dislike", anim: "shake" },
+            kedi: { text: "Miyav sesleri beni çok korkutuyor, kediler bizi kovalar! 🐱", status: "dislike", anim: "shake" },
+            yagmur: { text: "Yağmurda şapşal tüylerim sırılsıklam oluyor, ıyy! 🌧️", status: "dislike", anim: "shake" },
+            karanlik: { text: "Karanlıkta komik yüzümü aynada göremiyorum, sevmedim. 🖤", status: "dislike", anim: "shake" },
+            parfum: { text: "Apsuuu! Parfüm kokusu beni hapşırtıyor, en nefret ettiğim şey! 🧪", status: "dislike", anim: "shake" }
+        }
+    },
+    blinky: {
+        name: "Blinky", image: "blinky.jpg", personality: "Saf (İyi Kalpli)",
+        msgIdle: "Uzaydan dünyaya sevgi getirdim! 👽",
+        qLikes: "Pamuk şeker, çikolata, gofret, süt, rakun, üzüm, oyuncak, dondurma, emoji, uzay, yağmur ve karanlığı severim! 👽🖤",
+        qDislikes: "Elma, kaplan, kedi ve parfümden hoşlanmam. 🍏🐯",
+        qFavOne: "En sevdiğim şey evim olan güzel uzay! 🚀🌌",
+        qHateOne: "En sevmediğim şey kokusu beni bayıltan parfüm! 🧪",
+        qFriend: "Kalbi temiz olan, bana uzay hikayelerinde eşlik eden herkes dostumdur! 🌎",
+        qIntro: "Ben Blinky. Galaksiler arası yolculuk yapan, saf ve sevgi dolu bir uzaylıyım! 👽 UFO'm var!",
+        responses: {
+            pamuk_seker: { text: "Dünyanın pamuk şekeri bizim gezegendeki bulutlara benziyor, çok iyi! 🍭", status: "like", anim: "bounce" },
+            cikolata: { text: "Bu çikolata enerjimi maksimum seviyeye çıkardı! 🍫", status: "like", anim: "bounce" },
+            gofret: { text: "Çıtır çıtır gofretler uzay gemisinde yemek için harika. 🧇", status: "like", anim: "bounce" },
+            sut: { text: "Beyaz sıvı süt, dünyadaki en saf ve güzel şeylerden biri! 🥛", status: "like", anim: "bounce" },
+            rakun: { text: "Rakun dostumuzun gözlerindeki bantlar tıpkı bir uzay gözlüğü gibi! 🦝", status: "like", anim: "bounce" },
+            uzum: { text: "Küçük mor üzüm taneleri uzay meyvesi gibi lezzetli! 🍇", status: "like", anim: "bounce" },
+            oyuncak: { text: "Dünya oyuncakları çok yaratıcı, bayıldım! 🧸", status: "like", anim: "bounce" },
+            dondurma: { text: "Soğuk dondurma tıpkı Neptün gezegeni gibi, çok severim! 🍦", status: "like", anim: "bounce" },
+            emoji: { text: "Emojiler evrensel bir dildir, tüm uzaylılar anlar! 😊", status: "like", anim: "bounce" },
+            uzay: { text: "Sonsuz uzay benim evim! En sevdiğim yer ve durumdur! 🚀", status: "like", anim: "bounce" },
+            yagmur: { text: "Gezegenimize hiç yağmur yağmazdı, bu doğa olayını çok seviyorum. 🌧️", status: "like", anim: "bounce" },
+            karanlik: { text: "Karanlık uzayın doğal rengidir, bana huzur veriyor. 🖤", status: "like", anim: "bounce" },
+            elma: { text: "Elmanın tadını bir türlü sevemedim dostum, bana göre değil. 🍏", status: "dislike", anim: "shake" },
+            kaplan: { text: "Vahşi kaplanlar çok hırçın, saf kalbimi kırıyorlar. 🐯", status: "dislike", anim: "shake" },
+            kedi: { text: "Kediler antenlerimi tırmalamaya çalıştı, hiç hoşlanmadım. 🐱", status: "dislike", anim: "shake" },
+            parfum: { text: "Öhö! Ağır kimyasal parfüm kokusu uzaylı ciğerlerimi mahvetti, berbat! 🧪", status: "dislike", anim: "shake" }
+        }
+    },
+    flip: {
+        name: "Flip", image: "Flip.jpg", personality: "Savunucu",
+        msgIdle: "Adalet her zaman kazanır! 🦅",
+        qLikes: "Çikolata, gofret, elma, üzüm, oyuncak, dondurma, emoji, uzay, kedi, yağmur ve parfümü severim! 🍏🦅",
+        qDislikes: "Pamuk şeker, süt, rakun, kaplan ve karanlıktan nefret ederim! 🍭❌",
+        qFavOne: "En sevdiğim şey sulu ve kırmızı bir elma! 🍏",
+        qHateOne: "En sevmediğim şey vahşi kaplanlar! 🐯",
+        qFriend: "Can dostum Moosey'yi her zaman korur ve savunurum. O benim en has arkadaşımdır! 🦌",
+        qIntro: "Ben Flip. Adalet peşinde koşan, arkadaşlarını kötülüklerden koruyan akıllı bir kuşum! 🦅",
+        responses: {
+            cikolata: { text: "Geceleri uçarken çikolata yemek bana çok iyi enerji veriyor. 🍫", status: "like", anim: "bounce" },
+            gofret: { text: "Gofretin çıtırlığı kanatlarıma güç katıyor sanki! 🧇", status: "like", anim: "bounce" },
+            elma: { text: "İşte bu! Kırmızı sulu bir elma benim dünyadaki en sevdiğim şey! 🍏", status: "like", anim: "bounce" },
+            uzum: { text: "Gözlerimi keskinleştiren harika lezzetli üzümler! 🍇", status: "like", anim: "bounce" },
+            oyuncak: { text: "Kanatlarımla uçurabileceğim küçük bir oyuncak, çok iyi! 🧸", status: "like", anim: "bounce" },
+            dondurma: { text: "Uçtuktan sonra hararetini alan dondurmaya bayılırım. 🍦", status: "like", anim: "bounce" },
+            emoji: { text: "Adaleti savunan kahraman emojileri severim! 😊", status: "like", anim: "bounce" },
+            uzay: { text: "Bulutların da ötesindeki o uzay boşluğunda uçmayı hayal ediyorum. 🚀", status: "like", anim: "bounce" },
+            kedi: { text: "Bazı kuşlar kedileri sevmez ama bu kedi çok adil ve dost canlısı! 🐱", status: "like", anim: "bounce" },
+            yagmur: { text: "Havada süzülürken yağmur damlalarıyla yıkanmak harika! 🌧️", status: "like", anim: "bounce" },
+            parfum: { text: "Güzel ve ferah kokan parfümler tüylerimi parlatıyor. 🧪", status: "like", anim: "bounce" },
+            pamuk_seker: { text: "Pamuk şeker kanatlarıma yapışıyor, uçmamı zorlaştırıyor, sevmem! 🍭", status: "dislike", anim: "shake" },
+            sut: { text: "Kuşlar süt içmez, sistemime tamamen aykırı, getirme şunu. 🥛", status: "dislike", anim: "shake" },
+            rakun: { text: "Rakunlar yuvalardaki yumurtaları çalıyor, adaletsiz canlılar, asla sevmem! 🦝", status: "dislike", anim: "shake" },
+            kaplan: { text: "Kaplanlar ormanın en haksız ve vahşi avcıları! En nefret ettiğim şey! 🐯", status: "dislike", anim: "shake" },
+            karanlik: { text: "Karanlık çöktüğünde havada adalet nöbeti tutamıyorum, hiç sevmem. 🖤", status: "dislike", anim: "shake" }
+        }
+    },
+    gus: {
+        name: "Gus", image: "Gus.jpg", personality: "Biraz Sinirli",
+        msgIdle: "Arka sıra, sessiz olun bakayım! 😡",
+        qLikes: "Gofret, süt, rakun, üzüm, uzay, kaplan, kedi, yağmur ve karanlığı severim. 🍇👹",
+        qDislikes: "Pamuk şeker, çikolata, elma, oyuncak, dondurma, emoji ve parfümleri asla önüme getirmeyin! 😡",
+        qFavOne: "En sevdiğim şey tabii ki taze üzümler! 🍇",
+        qHateOne: "En sevmediğim şey dersimin düzenini bozan emojiler! 📴",
+        qFriend: "Okuldaki diğer çalışkan ve disiplinli öğretmen arkadaşlarımdır. 🏫",
+        qIntro: "Ben Gus öğretmen. Cinsim bir canavar. Kuralları severim, sözümü dinlemeyenlere çok kızarım! 👹",
+        responses: {
+            gofret: { text: "Teneffüste çayın yanında gofret yemek fena fikir değil. 🧇", status: "like", anim: "angry" },
+            sut: { text: "Süt içmek ses tellerimi açıyor, ders anlatırken iyi oluyor. 🥛", status: "like", anim: "angry" },
+            rakun: { text: "Rakunlar çok zeki ve yaramazlık yapmadan dinleyen canlılar. 🦝", status: "like", anim: "angry" },
+            uzum: { text: "İşte bu! Sınıfta bana getirilecek tek şey taze üzümdür, en sevdiğim! 🍇", status: "like", anim: "angry" },
+            uzay: { text: "Uzayın sessizliği ve kuralları harika, tıpkı istediğim sınıf gibi! 🚀", status: "like", anim: "angry" },
+            kaplan: { text: "Kaplanlar gibi disiplinli ve güçlü olmalısınız öğrencilerim! Severim. 🐯", status: "like", anim: "angry" },
+            kedi: { text: "Sınıfın köşesinde sessizce oturan uslu kedileri severim. 🐱", status: "like", anim: "angry" },
+            yagmur: { text: "Yağmurlu havalarda herkes içeri girer, okulda tam bir sessizlik olur. 🌧️", status: "like", anim: "angry" },
+            karanlik: { text: "Karanlıkta kimse yaramazlık yapamaz çünkü nöbetçi canavar benim! 🖤", status: "like", anim: "angry" },
+            pamuk_seker: { text: "Pamuk şeker her yeri yapış yapış yapıyor, sınıfa sokmayın şunu! 🍭", status: "dislike", anim: "shake" },
+            cikolata: { text: "Çikolata yiyip sıraları kirletiyorsunuz, hiç sevmem! 🍫", status: "dislike", anim: "shake" },
+            elma: { text: "Elma yerken kütür kütür ses çıkartıp dersimi bölüyorsunuz, hayır! 🍏", status: "dislike", anim: "shake" },
+            oyuncak: { text: "Derste oyuncak oynamak kesinlikle YASAKTIR! El koyarım! 🧸", status: "dislike", anim: "shake" },
+            dondurma: { text: "Dondurma yiyip şifayı kapıyorsunuz, sonra okula gelmiyorsunuz, sevmem! 🍦", status: "dislike", anim: "shake" },
+            emoji: { text: "Sınav kağıtlarına emoji mi çiziyorsunuz?! En nefret ettiğim ciddiyetsizlik! 😡", status: "dislike", anim: "shake" },
+            parfum: { text: "Bu ağır parfüm kokusu sınıfın havasını bozuyor, pencereleri açın! 🧪", status: "dislike", anim: "shake" }
+        }
+    }
 };
 
-        function openMenu() {
-            database.ref(`the_pets_chat/${currentActiveChar}/messages`).off();
-            menuScreen.classList.remove('hidden');
+let currentId = "sugar";
+let happiness = 80;
+let conversationTimeout;
+
+const bubble = document.getElementById("bubble");
+const charImage = document.getElementById("charImage");
+const happinessBar = document.getElementById("happinessBar");
+const percentageLabel = document.getElementById("percentageLabel");
+const moodLabel = document.getElementById("moodLabel");
+
+function selectCharacter(id) {
+    currentId = id;
+    happiness = 80;
+    clearTimeout(conversationTimeout);
+    
+    document.querySelectorAll('.selector-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const char = characters[id];
+    charImage.src = char.image;
+    
+    resetAnimationAndIdle(char);
+    updateUi();
+}
+
+function askQuestion(qType) {
+    const char = characters[currentId];
+    clearTimeout(conversationTimeout);
+    
+    charImage.className = "";
+    if (char.personality.includes("Şapşal") || char.personality.includes("Neşeli")) {
+        charImage.classList.add("bounce");
+    } else if (char.personality.includes("Utangaç")) {
+        charImage.classList.add("scared");
+    } else if (currentId === "gus") {
+        charImage.classList.add("angry");
+    } else if (currentId === "dot") {
+        charImage.classList.add("spin");
+    }
+
+    if (qType === 'likes') bubble.innerText = char.qLikes;
+    if (qType === 'dislikes') bubble.innerText = char.qDislikes;
+    if (qType === 'favOne') bubble.innerText = char.qFavOne;
+    if (qType === 'hateOne') bubble.innerText = char.qHateOne;
+    if (qType === 'bestFriend') bubble.innerText = char.qFriend;
+    if (qType === 'intro') bubble.innerText = char.qIntro;
+
+    conversationTimeout = setTimeout(() => {
+        resetAnimationAndIdle(char);
+    }, 6000);
+}
+
+function giveItem(itemType) {
+    const char = characters[currentId];
+    clearTimeout(conversationTimeout);
+    charImage.className = ""; 
+    
+    const response = char.responses[itemType];
+    
+    if (response) {
+        bubble.innerText = response.text;
+        charImage.classList.add(response.anim);
+        
+        if (response.status === "like") {
+            happiness = Math.min(100, happiness + 15);
+        } else {
+            happiness = Math.max(0, happiness - 20);
         }
+    } else {
+        bubble.innerText = "Hmm, buna karşı nötrüm. 😐";
+    }
+    
+    updateUi();
+    
+    conversationTimeout = setTimeout(() => {
+        resetAnimationAndIdle(char);
+    }, 4000);
+}
 
-        function selectCharacter(char) {
-            currentActiveChar = char;
-            
-            chatContainer.className = `chat-container ${char}-theme`;
-            headerAvatar.src = charData[char].img; 
-            headerName.innerText = charData[char].name;
-            chatInput.placeholder = `${charData[char].name}'e bir şey yaz...`;
-            
-            chatMessages.innerHTML = '';
-            menuScreen.classList.add('hidden');
-            listenToFirebase(char);
-        }
+function resetAnimationAndIdle(char) {
+    charImage.className = "";
+    if (char.personality.includes("Şapşal") || char.personality.includes("Neşeli")) {
+        charImage.classList.add("bounce");
+    }
+    bubble.innerText = char.msgIdle;
+}
 
-        async function getGeminiResponse(userPrompt, char) {
-            const currentInstruction = characterInstructions[char];
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userPrompt }] }],
-                        systemInstruction: { parts: [{ text: currentInstruction }] }
-                    })
-                });
-                const data = await response.json();
-                return data.candidates[0].content.parts[0].text;
-            } catch (error) {
-                return "*Bip bop* Veri akışında küçük bir kesinti oldu, tekrar dener misiniz?";
-            }
-        }
+function updateUi() {
+    happinessBar.style.width = happiness + "%";
+    percentageLabel.innerText = "Mutluluk: " + happiness + "%";
+    
+    if (happiness > 75) moodLabel.innerText = "Duygu: Harika! 😍";
+    else if (happiness > 40) moodLabel.innerText = "Duygu: Normal 🙂";
+    else if (happiness > 15) moodLabel.innerText = "Duygu: Üzgün/Korkmuş 😢";
+    else moodLabel.innerText = "Duygu: Bunalmış/Sinirli 🤬";
+}
 
-        async function sendMessage() {
-            const text = chatInput.value.trim();
-            if (text === '') return;
+selectCharacter("sugar");
+</script>
 
-            chatInput.value = '';
-
-            const charPath = `the_pets_chat/${currentActiveChar}/messages`;
-            const userRef = database.ref(charPath).push();
-            userRef.set({ sender: 'user', text: text, timestamp: Date.now() });
-
-            const botResponse = await getGeminiResponse(text, currentActiveChar);
-            const botRef = database.ref(charPath).push();
-            botRef.set({ sender: 'bot', text: botResponse, timestamp: Date.now() });
-        }
-
-        function listenToFirebase(char) {
-            database.ref(`the_pets_chat/${char}/messages`).on('child_added', (snapshot) => {
-                const msg = snapshot.val();
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('message', msg.sender);
-                messageDiv.innerText = msg.text;
-                chatMessages.appendChild(messageDiv);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            });
-        }
-
-        openMenu();
-
-        sendBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-    </script>
 </body>
 </html>
